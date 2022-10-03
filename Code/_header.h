@@ -46,7 +46,7 @@ const char* input_source = "combined";
 
 // General Directories
 char  dir_master[200];
-int n1 = sprintf(dir_master, "../_Files/ALICE_kinematics_trial%i", trialNum);
+int n1 = sprintf(dir_master, "../Files/ALICE_kinematics_trial%i", trialNum);
 //int n1 = sprintf(dir_master, "../_Files/N-%i_beam-%i_ptMin-%i_ptHatMin-%i_ptBias-%i_gaus-%i_sigma-%i_modHag_trial%i",
 //    nEvent, int(beamPower), int(ptJetMin), int(ptHatMin), int(ptBiasPow), gaus_mean, gaus_sigma, 1);
 
