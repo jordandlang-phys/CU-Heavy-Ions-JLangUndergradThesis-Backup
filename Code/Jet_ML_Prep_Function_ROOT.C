@@ -37,7 +37,7 @@ void Jet_ML_Prep(char* file_name, char* output_tree_description, float pt_min, f
     
     // Combined file of jets from thermal and PYTHIA data
     char combined_file_path[200];
-    sprintf(combined_file_path, "%s/Jet_Comb_%s_Trees.root", dir_data, file_name);
+    sprintf(combined_file_path, "%s/Comb_%s_Trees.root", dir_data, file_name);
     TFile* combined_file = new TFile(combined_file_path, "READ");
     
     TTree* combJet_tree = (TTree*) combined_file->Get("FastJet_Tree");
@@ -122,6 +122,9 @@ void Jet_ML_Prep(char* file_name, char* output_tree_description, float pt_min, f
     
     // Plotted Data Output Tree
     // NOTE: This assumes jets have already been sorted from highest E to lowest E by FastJet!
+    
+    int nEvent = pythJet_tree->GetEntries();
+    
     int jet_total_n = 0;
     int jet_hard_n = 0;
     int jet_soft_n = 0;
@@ -367,18 +370,23 @@ void Jet_ML_Prep_Function_ROOT() {
 //        40., 60.);
     
     Jet_ML_Prep(
-        "30_80_Train",
+        "10_90_Train",
         "TRAINING data for machine learning. 30-80 GeV with pT^3 bias.",
-        30., 80.);
+        10., 90.);
     
     Jet_ML_Prep(
-        "40_50_Test",
+        "20_40_Test",
         "TESTING data for machine learning. 40-50 GeV with pT^3 bias.",
-        40., 50.);
+        20., 40.);
     
     Jet_ML_Prep(
-        "50_60_Test",
+        "40_60_Test",
         "TESTING data for machine learning. 50-60 GeV with pT^3 bias.",
-        50., 60.);
+        40., 60.);
+    
+    Jet_ML_Prep(
+        "60_80_Test",
+        "TESTING data for machine learning. 50-60 GeV with pT^3 bias.",
+        60., 80.);
     
 }
