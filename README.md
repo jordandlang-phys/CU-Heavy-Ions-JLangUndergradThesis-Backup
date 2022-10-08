@@ -22,7 +22,7 @@ Exploration of machine learning for heavy ion jet pt reconstruction. Managed by 
 * Open JuPyRoot using `root --notebook` in Terminal.
 
 ### 5. Extract_Select_Variables_ROOT.C (optional, for analysis)
-* Takes in .csv files exported from machine learning in Python and converts them to .root files for analysis._
+* _Takes in .csv files exported from machine learning in Python and converts them to .root files for analysis._
 * Uses: ROOT
 
 ### 6. Jet_ML_Plotter_ROOT.C (optional, for analysis)
