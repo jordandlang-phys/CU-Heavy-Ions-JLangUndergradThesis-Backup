@@ -352,7 +352,7 @@ void Jet_ML_Prep(char* file_name, char* output_tree_description, float pt_min, f
     std::cout << "----- Completed " << output_tree_name << " -----" << std::endl;
 }
 
-void Jet_ML_Prep_Function_ROOT() {
+void Jet_ML_Prep_ROOT() {
     
 //    char output_file_path[200];
 //    sprintf(output_file_path, "%s/%s", dir_data, output_file_name);

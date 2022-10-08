@@ -623,381 +623,183 @@ void Jet_Truth_Plotter(
 
 
 
-void Jet_ML_Plotter_Function_ROOT() {
+void Jet_ML_Analyzer_ROOT() {
 
-    // Training with 8 features
+    // Training with 12 features
     char* th1d_name_arr_1[5] = {
-        "Test_8feat_ptTruePythia_feature_importance",
-        "Test_8feat_ptTruePythia_simple_correction",    "Test_8feat_ptTruePythia_linear_regression",
-        "Test_8feat_ptTruePythia_random_forest",        "Test_8feat_ptTruePythia_neural_network"};
+        "Tree_40_60_Test_12feat_ptTruePythia_feature_importance",
+        "Tree_40_60_Test_12feat_ptTruePythia_simple_correction",
+        "Tree_40_60_Test_12feat_ptTruePythia_linear_regression",
+        "Tree_40_60_Test_12feat_ptTruePythia_random_forest",
+        "Tree_40_60_Test_12feat_ptTruePythia_neural_network"};
     Jet_ML_Plotter(
-        "ML_Results.root", // input file name
+        "ML_Results_10_90.root", // input file name
         th1d_name_arr_1, // th1d_name_arr array of tree names
-        "th1d_jet_pt_delta_8feat_ptTruePythia.pdf", // plot file name
-        "8feature_ptTruePythia", // pt_train_bin base name
+        "th1d_jet_pt_delta_12feat_ptTruePythia.pdf", // plot file name
+        "12feature_ptTruePythia", // pt_test_bin base name
         40., 60., // pt_min, pt_max
-        true, //bool_showLegend
+        true, // bool_showLegend
         true, // bool_showFeatures
         true, // bool_normalize,
         true, // bool_compareToPaper
-                   "Pythia"); // truth source
-    
-    char* th1d_name_arr_2[5] = {
-        "Test_8feat_ptTruePaper_feature_importance",
-        "Test_8feat_ptTruePaper_simple_correction",   "Test_8feat_ptTruePaper_linear_regression",
-        "Test_8feat_ptTruePaper_random_forest",       "Test_8feat_ptTruePaper_neural_network"};
-    Jet_ML_Plotter(
-        "ML_Results.root", // input file name
-        th1d_name_arr_2, // th1d_name_arr array of tree names
-        "th1d_jet_pt_delta_8feat_ptTruePaper.pdf", // plot file name
-        "8feature_ptTruePaper", // pt_train_bin base name
-        40., 60., // pt_min, pt_max
-        true, //bool_showLegend
-        true, // bool_showFeatures
-        true, // bool_normalize,
-        true, // bool_compareToPaper
-                   "Paper"); // truth source
-    
-    
-    
-    // Training with 3 features
-    char* th1d_name_arr_3[5] = {
-        "Test_3feat_ptTruePythia_feature_importance",
-        "Test_3feat_ptTruePythia_simple_correction",  "Test_3feat_ptTruePythia_linear_regression",
-        "Test_3feat_ptTruePythia_random_forest",      "Test_3feat_ptTruePythia_neural_network"};
-    Jet_ML_Plotter(
-        "ML_Results.root", // input file name
-        th1d_name_arr_3, // th1d_name_arr array of tree names
-        "th1d_jet_pt_delta_3feat_ptTruePythia.pdf", // plot file name
-        "3feature_ptTruePythia", // pt_train_bin base name
-        40., 60., // pt_min, pt_max
-        true, //bool_showLegend
-        true, // bool_showFeatures
-        true, // bool_normalize,
-        true, // bool_compareToPaper
-                   "Pythia"); // truth source
-    
-    char* th1d_name_arr_4[5] = {
-        "Test_3feat_ptTruePaper_feature_importance",
-        "Test_3feat_ptTruePaper_simple_correction",   "Test_3feat_ptTruePaper_linear_regression",
-        "Test_3feat_ptTruePaper_random_forest",       "Test_3feat_ptTruePaper_neural_network"};
-    Jet_ML_Plotter(
-        "ML_Results.root", // input file name
-        th1d_name_arr_4, // th1d_name_arr array of tree names
-        "th1d_jet_pt_delta_3feat_ptTruePaper.pdf", // plot file name
-        "3feature_ptTruePaper", // pt_train_bin base name
-        40., 60., // pt_min, pt_max
-        true, //bool_showLegend
-        true, // bool_showFeatures
-        true, // bool_normalize,
-        true, // bool_compareToPaper
-                   "Paper"); // truth source
+        "Pythia" // truth source
+        );
     
     Jet_Truth_Plotter(
-        "ML_Results_40_60_Test_8feat_ptTruePaper.root",
-        "th1d_train_40_60_pt_true.pdf",
-        "8feature_ptTruePaper",
-        40., 60.,
-        "Paper"
+        "ML_Results_10_90_Tree_40_60_Test_12feat_ptTruePythia.root", //  input file name
+        "th1d_10_90_Tree_40_60_Test_12feat_ptTruePythia.pdf", // plot file name
+        "12feature_ptTruePythia", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        "Pythia" // truth source
         );
     
-    // Training with 8 features
-    Jet_Test_Range_Plotter(
-        "ML_Results_40_60_Test_8feat_ptTruePaper.root", // input_file_name
-        "th1d_train_40_60_test_40_60.pdf",
-        "8feature_ptTruePaper", // plot_dir_name for output
-        40., 60., // train_pt_min/max
-        40., 60., // test_pt_min/max
-                           "Paper"
-        );
-
-    Jet_Test_Range_Plotter(
-        "ML_Results_40_60_Test_8feat_ptTruePaper.root", // input_file_name
-        "th1d_train_40_60_test_40_42.pdf",
-        "8feature_ptTruePaper", // plot_dir_name for output
-        40., 60., // train_pt_min/max
-        40., 42., // test_pt_min/max
-                           "Paper"
-        );
-
-    Jet_Test_Range_Plotter(
-        "ML_Results_40_60_Test_8feat_ptTruePaper.root", // input_file_name
-        "th1d_train_40_60_test_49_51.pdf",
-        "8feature_ptTruePaper", // plot_dir_name for output
-        40., 60., // train_pt_min/max
-        49., 51., // test_pt_min/max
-                           "Paper"
-        );
-
-    Jet_Test_Range_Plotter(
-        "ML_Results_40_60_Test_8feat_ptTruePaper.root", // input_file_name
-        "th1d_train_40_60_test_58_60.pdf",
-        "8feature_ptTruePaper", // plot_dir_name for output
-        40., 60., // train_pt_min/max
-        58., 60., // test_pt_min/max
-                           "Paper"
-        );
-
-    // Training with 3 features
-    Jet_Test_Range_Plotter(
-        "ML_Results_40_60_Test_3feat_ptTruePaper.root", // input_file_name
-        "th1d_train_40_60_test_40_60.pdf",
-        "3feature_ptTruePaper", // plot_dir_name for output
-        40., 60., // train_pt_min/max
-        40., 60., // test_pt_min/max
-                           "Paper"
-        );
-
-    Jet_Test_Range_Plotter(
-        "ML_Results_40_60_Test_3feat_ptTruePaper.root", // input_file_name
-        "th1d_train_40_60_test_40_42.pdf",
-        "3feature_ptTruePaper", // plot_dir_name for output
-        40., 60., // train_pt_min/max
-        40., 42., // test_pt_min/max
-                           "Paper"
-        );
-
-    Jet_Test_Range_Plotter(
-        "ML_Results_40_60_Test_3feat_ptTruePaper.root", // input_file_name
-        "th1d_train_40_60_test_49_51.pdf",
-        "3feature_ptTruePaper", // plot_dir_name for output
-        40., 60., // train_pt_min/max
-        49., 51., // test_pt_min/max
-                           "Paper"
-        );
-
-    Jet_Test_Range_Plotter(
-        "ML_Results_40_60_Test_3feat_ptTruePaper.root", // input_file_name
-        "th1d_train_40_60_test_58_60.pdf",
-        "3feature_ptTruePaper", // plot_dir_name for output
-        40., 60., // train_pt_min/max
-        58., 60., // test_pt_min/max
-                           "Paper"
-        );
+//    // Training with 8 features
+//    char* th1d_name_arr_1[5] = {
+//        "Test_8feat_ptTruePythia_feature_importance",
+//        "Test_8feat_ptTruePythia_simple_correction",    "Test_8feat_ptTruePythia_linear_regression",
+//        "Test_8feat_ptTruePythia_random_forest",        "Test_8feat_ptTruePythia_neural_network"};
+//    Jet_ML_Plotter(
+//        "ML_Results.root", // input file name
+//        th1d_name_arr_1, // th1d_name_arr array of tree names
+//        "th1d_jet_pt_delta_8feat_ptTruePythia.pdf", // plot file name
+//        "8feature_ptTruePythia", // pt_train_bin base name
+//        40., 60., // pt_min, pt_max
+//        true, //bool_showLegend
+//        true, // bool_showFeatures
+//        true, // bool_normalize,
+//        true, // bool_compareToPaper
+//        "Pythia"); // truth source
+//
+//    char* th1d_name_arr_2[5] = {
+//        "Test_8feat_ptTruePaper_feature_importance",
+//        "Test_8feat_ptTruePaper_simple_correction",   "Test_8feat_ptTruePaper_linear_regression",
+//        "Test_8feat_ptTruePaper_random_forest",       "Test_8feat_ptTruePaper_neural_network"};
+//    Jet_ML_Plotter(
+//        "ML_Results.root", // input file name
+//        th1d_name_arr_2, // th1d_name_arr array of tree names
+//        "th1d_jet_pt_delta_8feat_ptTruePaper.pdf", // plot file name
+//        "8feature_ptTruePaper", // pt_train_bin base name
+//        40., 60., // pt_min, pt_max
+//        true, //bool_showLegend
+//        true, // bool_showFeatures
+//        true, // bool_normalize,
+//        true, // bool_compareToPaper
+//        "Paper"); // truth source
+//
+//    // Training with 3 features
+//    char* th1d_name_arr_3[5] = {
+//        "Test_3feat_ptTruePythia_feature_importance",
+//        "Test_3feat_ptTruePythia_simple_correction",  "Test_3feat_ptTruePythia_linear_regression",
+//        "Test_3feat_ptTruePythia_random_forest",      "Test_3feat_ptTruePythia_neural_network"};
+//    Jet_ML_Plotter(
+//        "ML_Results.root", // input file name
+//        th1d_name_arr_3, // th1d_name_arr array of tree names
+//        "th1d_jet_pt_delta_3feat_ptTruePythia.pdf", // plot file name
+//        "3feature_ptTruePythia", // pt_train_bin base name
+//        40., 60., // pt_min, pt_max
+//        true, //bool_showLegend
+//        true, // bool_showFeatures
+//        true, // bool_normalize,
+//        true, // bool_compareToPaper
+//        "Pythia"); // truth source
+//
+//    char* th1d_name_arr_4[5] = {
+//        "Test_3feat_ptTruePaper_feature_importance",
+//        "Test_3feat_ptTruePaper_simple_correction",   "Test_3feat_ptTruePaper_linear_regression",
+//        "Test_3feat_ptTruePaper_random_forest",       "Test_3feat_ptTruePaper_neural_network"};
+//    Jet_ML_Plotter(
+//        "ML_Results.root", // input file name
+//        th1d_name_arr_4, // th1d_name_arr array of tree names
+//        "th1d_jet_pt_delta_3feat_ptTruePaper.pdf", // plot file name
+//        "3feature_ptTruePaper", // pt_train_bin base name
+//        40., 60., // pt_min, pt_max
+//        true, //bool_showLegend
+//        true, // bool_showFeatures
+//        true, // bool_normalize,
+//        true, // bool_compareToPaper
+//        "Paper"); // truth source
+//
+//    Jet_Truth_Plotter(
+//        "ML_Results_40_60_Test_8feat_ptTruePaper.root",
+//        "th1d_train_40_60_pt_true.pdf",
+//        "8feature_ptTruePaper",
+//        40., 60.,
+//        "Paper"
+//        );
+//
+//    // Training with 8 features
+//    Jet_Test_Range_Plotter(
+//        "ML_Results_40_60_Test_8feat_ptTruePaper.root", // input_file_name
+//        "th1d_train_40_60_test_40_60.pdf",
+//        "8feature_ptTruePaper", // plot_dir_name for output
+//        40., 60., // train_pt_min/max
+//        40., 60., // test_pt_min/max
+//        "Paper"
+//        );
+//
+//    Jet_Test_Range_Plotter(
+//        "ML_Results_40_60_Test_8feat_ptTruePaper.root", // input_file_name
+//        "th1d_train_40_60_test_40_42.pdf",
+//        "8feature_ptTruePaper", // plot_dir_name for output
+//        40., 60., // train_pt_min/max
+//        40., 42., // test_pt_min/max
+//        "Paper"
+//        );
+//
+//    Jet_Test_Range_Plotter(
+//        "ML_Results_40_60_Test_8feat_ptTruePaper.root", // input_file_name
+//        "th1d_train_40_60_test_49_51.pdf",
+//        "8feature_ptTruePaper", // plot_dir_name for output
+//        40., 60., // train_pt_min/max
+//        49., 51., // test_pt_min/max
+//        "Paper"
+//        );
+//
+//    Jet_Test_Range_Plotter(
+//        "ML_Results_40_60_Test_8feat_ptTruePaper.root", // input_file_name
+//        "th1d_train_40_60_test_58_60.pdf",
+//        "8feature_ptTruePaper", // plot_dir_name for output
+//        40., 60., // train_pt_min/max
+//        58., 60., // test_pt_min/max
+//        "Paper"
+//        );
+//
+//    // Training with 3 features
+//    Jet_Test_Range_Plotter(
+//        "ML_Results_40_60_Test_3feat_ptTruePaper.root", // input_file_name
+//        "th1d_train_40_60_test_40_60.pdf",
+//        "3feature_ptTruePaper", // plot_dir_name for output
+//        40., 60., // train_pt_min/max
+//        40., 60., // test_pt_min/max
+//        "Paper"
+//        );
+//
+//    Jet_Test_Range_Plotter(
+//        "ML_Results_40_60_Test_3feat_ptTruePaper.root", // input_file_name
+//        "th1d_train_40_60_test_40_42.pdf",
+//        "3feature_ptTruePaper", // plot_dir_name for output
+//        40., 60., // train_pt_min/max
+//        40., 42., // test_pt_min/max
+//        "Paper"
+//        );
+//
+//    Jet_Test_Range_Plotter(
+//        "ML_Results_40_60_Test_3feat_ptTruePaper.root", // input_file_name
+//        "th1d_train_40_60_test_49_51.pdf",
+//        "3feature_ptTruePaper", // plot_dir_name for output
+//        40., 60., // train_pt_min/max
+//        49., 51., // test_pt_min/max
+//        "Paper"
+//        );
+//
+//    Jet_Test_Range_Plotter(
+//        "ML_Results_40_60_Test_3feat_ptTruePaper.root", // input_file_name
+//        "th1d_train_40_60_test_58_60.pdf",
+//        "3feature_ptTruePaper", // plot_dir_name for output
+//        40., 60., // train_pt_min/max
+//        58., 60., // test_pt_min/max
+//        "Paper"
+//        );
 }
 
-
-
-
-//    // Generates a directory for output files
-//    char subdir_plots[200];
-//    sprintf(subdir_plots, "%s/FastJet_Subtraction", dir_plots);
-//    std::__fs::filesystem::create_directories(subdir_plots);
-//
-//    // Gets histograms from output file
-//    // Note: names are the assigned names from histogram creation
-//    TH1D* th1d_jet_pt_delta         = (TH1D*) input_file->Get("th1d_jet_pt_delta");
-//    TH1D* th1d_const_median_pt      = (TH1D*) input_file->Get("th1d_median_pt_background");
-//    TH1D* th1d_jet_const_n          = (TH1D*) input_file->Get("th1d_jet_part_n");
-//    TH1D* th1d_jet_const_n_mean     = (TH1D*) input_file->Get("th1d_jet_part_n_mean");
-//    TH1D* th1d_jet_const_n_median   = (TH1D*) input_file->Get("th1d_jet_part_n_median");
-//    TH1D* th1d_event_rho            = (TH1D*) input_file->Get("th1d_event_rho");
-//    TH1D* th1d_jet_truth_low_bin    = (TH1D*) input_file->Get("th1d_jet_truth_low_bin");
-//
-//    TH1D* th1d_jet_pt_compare       = (TH1D*) input_file->Get("th1d_jet_pt_compare");
-//    TH1D* th1d_jet_pt_true          = (TH1D*) input_file->Get("th1d_jet_pt_true");
-//    TH1D* th1d_jet_pt_corr          = (TH1D*) input_file->Get("th1d_jet_pt_corr");
-//    TH1D* th1d_jet_pt_raw           = (TH1D*) input_file->Get("th1d_jet_pt_raw");
-//
-//    TH1D* th1d_jet_area_compare     = (TH1D*) input_file->Get("th1d_jet_area_compare");
-//    TH1D* th1d_jet_area_compare_norm = (TH1D*) input_file->Get("th1d_jet_area_compare_norm");
-//    TH1D* th1d_jet_area_total       = (TH1D*) input_file->Get("th1d_jet_area_total");
-//    TH1D* th1d_jet_area_hard        = (TH1D*) input_file->Get("th1d_jet_area_hard");
-//    TH1D* th1d_jet_area_soft        = (TH1D*) input_file->Get("th1d_jet_area_soft");
-//
-//    // Basic Plots
-//
-//    const int label_arr_size = 2;
-//    //char line2[100];
-//    //int int1 = sprintf(line2, "2.76 TeV, N_{event} = %i", nEvent);
-//    char* label_arr[label_arr_size] = {
-//        "FastJet, R = 0.4", "p_{T min, jet} > 5.0 GeV"};
-//
-//    th1d_plotter(
-//        th1d_jet_pt_delta,
-//        "FastJet_Subtraction/th1d_jet_pt_delta.pdf",
-//        jet_gen_line, jet_gen_mark, mark_circ_fill[0], mark_circ_fill[1],
-//        0, false,
-//        label_arr, label_arr_size, 0.65, 0.75);
-//
-//    th1d_plotter(
-//        th1d_const_median_pt,
-//        "FastJet_Subtraction/th1d_const_median_pt.pdf",
-//        jet_gen_line, jet_gen_mark, mark_circ_fill[0], mark_circ_fill[1],
-//        0, false,
-//        label_arr, label_arr_size, 0.65, 0.75);
-//
-//    th1d_plotter(
-//        th1d_jet_const_n,
-//        "FastJet_Subtraction/th1d_jet_const_n.pdf",
-//        jet_gen_line, jet_gen_mark, mark_circ_fill[0], mark_circ_fill[1],
-//        0, false,
-//        label_arr, label_arr_size, 0.65, 0.75);
-//
-//    th1d_plotter(
-//        th1d_jet_const_n_mean,
-//        "FastJet_Subtraction/th1d_jet_const_n_mean.pdf",
-//        jet_gen_line, jet_gen_mark, mark_circ_fill[0], mark_circ_fill[1],
-//        0, false,
-//        label_arr, label_arr_size, 0.65, 0.75);
-//
-//    th1d_plotter(
-//        th1d_jet_const_n_median,
-//        "FastJet_Subtraction/th1d_jet_const_n_median.pdf",
-//        jet_gen_line, jet_gen_mark, mark_circ_fill[0], mark_circ_fill[1],
-//        0, false,
-//        label_arr, label_arr_size, 0.65, 0.75);
-//
-//    th1d_plotter(
-//        th1d_event_rho,
-//        "FastJet_Subtraction/th1d_event_rho.pdf",
-//        jet_gen_line, jet_gen_mark, mark_circ_fill[0], mark_circ_fill[1],
-//        0, false,
-//        label_arr, label_arr_size, 0.65, 0.75);
-//
-//    th1d_plotter(
-//        th1d_jet_truth_low_bin,
-//        "FastJet_Subtraction/th1d_jet_truth_low_bin.pdf",
-//        jet_gen_line, jet_gen_mark, mark_circ_fill[0], mark_circ_fill[1],
-//        0, false,
-//        label_arr, label_arr_size, 0.65, 0.75);
-//
-//
-//    // General Plot Variables
-//    TCanvas* canvas;
-//    TLatex* latex;
-//    TLegend* legend;
-//    char plot_output[200];
-//
-//    // Creating Combined Jet pT Plot
-//
-//    // TCanvas("name", "title", width (px), height (px))
-//    canvas = new TCanvas("canvas", "", 800, 600);
-//
-//    // Turns on ticks, turns off stats
-//    gPad->SetTicks();
-//    gStyle->SetOptStat(0);
-//
-//    // Turns on Latex formatting relative to canvas
-//    latex = new TLatex();
-//    latex->SetNDC(kTRUE);
-//
-//    // Build histogram plot
-//    th1d_jet_pt_true->SetLineColor(jet_red_mark);
-//    th1d_jet_pt_true->SetMarkerColor(jet_red_line);
-//    th1d_jet_pt_true->SetMarkerStyle(mark_circ_open[0]);
-//    th1d_jet_pt_true->SetMarkerSize(mark_circ_open[1]);
-//
-//    th1d_jet_pt_corr->SetLineColor(jet_vio_mark);
-//    th1d_jet_pt_corr->SetMarkerColor(jet_vio_line);
-//    th1d_jet_pt_corr->SetMarkerStyle(mark_squa_open[0]);
-//    th1d_jet_pt_corr->SetMarkerSize(mark_squa_open[1]);
-//
-//    th1d_jet_pt_raw->SetLineColor(jet_blu_mark);
-//    th1d_jet_pt_raw->SetMarkerColor(jet_blu_line);
-//    th1d_jet_pt_raw->SetMarkerStyle(mark_diam_open[0]);
-//    th1d_jet_pt_raw->SetMarkerSize(mark_diam_open[1]);
-//
-//    th1d_jet_pt_compare->SetAxisRange(0, 1.2 * th1d_jet_pt_true->GetMaximum(), "Y");
-//
-//    th1d_jet_pt_compare->Draw();
-//    th1d_jet_pt_raw->Draw("same");
-//    th1d_jet_pt_corr->Draw("same");
-//    th1d_jet_pt_true->Draw("same");
-//
-//    // TLegend(xlow, ylow, xup, yup)
-//    legend = new TLegend(0.75, 0.65, 0.85, 0.85);
-//    legend->AddEntry(th1d_jet_pt_true, "Truth", "lp");
-//    legend->AddEntry(th1d_jet_pt_corr, "Corrected", "lp");
-//    legend->AddEntry(th1d_jet_pt_raw, "Raw", "lp");
-//    legend->SetLineWidth(0);
-//    legend->Draw();
-//
-//    //    latex->DrawLatex(0.60, (ypos + 0.02), "#scale[0.6]{#bf{PYTHIA8 + Thermal Model}}");
-//    //    latex->DrawLatex(0.60, (ypos - 0.02), Form("#scale[0.6]{#bf{2.76 TeV, %i events}}", nEvent));
-//
-//    sprintf(plot_output, "%s/th1d_jet_pt_compare.pdf", subdir_plots);
-//    canvas->Print(plot_output);
-//    std::cout << "Plotted th1d_jet_pt_compare.pdf" << std::endl;
-//    gPad->SetLogy(0);
-//
-//
-//
-//    // Creating Combined Jet Area Plot
-//
-//    // TCanvas("name", "title", width (px), height (px))
-//    canvas = new TCanvas("canvas", "", 800, 600);
-//
-//    // Turns on ticks, turns off stats
-//    gPad->SetTicks();
-//    gStyle->SetOptStat(0);
-//
-//    // Turns on Latex formatting relative to canvas
-//    latex = new TLatex();
-//    latex->SetNDC(kTRUE);
-//
-//    // Build histogram plot
-//    th1d_jet_area_hard->SetLineColor(jet_red_mark);
-//    th1d_jet_area_hard->SetMarkerColor(jet_red_line);
-//    th1d_jet_area_hard->SetMarkerStyle(mark_triu_open[0]);
-//    th1d_jet_area_hard->SetMarkerSize(mark_triu_open[1]);
-//
-//    th1d_jet_area_total->SetLineColor(jet_vio_mark);
-//    th1d_jet_area_total->SetMarkerColor(jet_vio_line);
-//    th1d_jet_area_total->SetMarkerStyle(mark_squa_open[0]);
-//    th1d_jet_area_total->SetMarkerSize(mark_squa_open[1]);
-//
-//    th1d_jet_area_soft->SetLineColor(jet_blu_mark);
-//    th1d_jet_area_soft->SetMarkerColor(jet_vio_line);
-//    th1d_jet_area_soft->SetMarkerStyle(mark_trid_open[0]);
-//    th1d_jet_area_soft->SetMarkerSize(mark_trid_open[1]);
-//
-//    th1d_jet_area_compare->SetAxisRange(0, 1.2 * th1d_jet_area_total->GetMaximum(), "Y");
-//
-//    th1d_jet_area_compare->Draw();
-//    th1d_jet_area_total->Draw("same");
-//    th1d_jet_area_soft->Draw("same");
-//    th1d_jet_area_hard->Draw("same");
-//
-//    // TLegend(xlow, ylow, xup, yup)
-//    legend = new TLegend(0.75, 0.65, 0.85, 0.85);
-//    legend->AddEntry(th1d_jet_area_hard, "Hard Jets", "lp");
-//    legend->AddEntry(th1d_jet_area_total, "All Areas", "lp");
-//    legend->AddEntry(th1d_jet_area_soft, "Soft Jets", "lp");
-//    legend->SetLineWidth(0);
-//    legend->Draw();
-//
-//    //    latex->DrawLatex(0.60, (ypos + 0.02), "#scale[0.6]{#bf{PYTHIA8 + Thermal Model}}");
-//    //    latex->DrawLatex(0.60, (ypos - 0.02), Form("#scale[0.6]{#bf{2.76 TeV, %i events}}", nEvent));
-//
-//    sprintf(plot_output, "%s/th1d_jet_area_compare.pdf", subdir_plots);
-//    canvas->Print(plot_output);
-//    std::cout << "Plotted th1d_jet_area_compare.pdf" << std::endl;
-//    gPad->SetLogy(0);
-//
-//     // Rescale Area Hists
-//
-//    th1d_jet_area_hard  ->Scale( 1. / th1d_jet_area_hard->Integral(),"WIDTH");
-//    th1d_jet_area_soft  ->Scale( 1. / th1d_jet_area_soft->Integral(),"WIDTH");
-//    th1d_jet_area_total ->Scale( 1. / th1d_jet_area_total->Integral(),"WIDTH");
-//
-//    // Print Scaled Plot
-//
-//    th1d_jet_area_compare_norm->SetAxisRange(0, 1.2 * th1d_jet_area_hard->GetMaximum(), "Y");
-//
-//    th1d_jet_area_compare_norm->Draw();
-//    th1d_jet_area_total->Draw("same");
-//    th1d_jet_area_soft->Draw("same");
-//    th1d_jet_area_hard->Draw("same");
-//
-//    // TLegend(xlow, ylow, xup, yup)
-//    legend->Draw();
-//
-//    //    latex->DrawLatex(0.60, (ypos + 0.02), "#scale[0.6]{#bf{PYTHIA8 + Thermal Model}}");
-//    //    latex->DrawLatex(0.60, (ypos - 0.02), Form("#scale[0.6]{#bf{2.76 TeV, %i events}}", nEvent));
-//
-//    sprintf(plot_output, "%s/th1d_jet_area_compare_norm.pdf", subdir_plots);
-//    canvas->Print(plot_output);
-//    std::cout << "Plotted th1d_jet_area_compare_norm.pdf" << std::endl;
-//    gPad->SetLogy(0);
 

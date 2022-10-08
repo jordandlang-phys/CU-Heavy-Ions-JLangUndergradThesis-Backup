@@ -34,10 +34,5 @@ void Extract_Select_Variables(char* file_name) {
 }
 
 void Extract_Select_Variables_ROOT() {
-    
-//    Extract_Select_Variables("ML_Results_40_60_Test_8feat_ptTruePaper");
-//    Extract_Select_Variables("ML_Results_40_60_Test_8feat_ptTruePythia");
-    
-    Extract_Select_Variables("ML_Results_40_60_Test_3feat_ptTruePaper");
-    Extract_Select_Variables("ML_Results_40_60_Test_3feat_ptTruePythia");
+    Extract_Select_Variables("ML_Results_10_90_Tree_40_60_Test_12feat_ptTruePythia");
 }
