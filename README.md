@@ -18,10 +18,10 @@ Exploration of machine learning for heavy ion jet pt reconstruction. Managed by 
 * This workflow uses Scikit-Learn and JuPyROOT (PyROOT, ROOT's Python library, running through Jupyter Notebook).
 * Install Python 3.8: https://www.python.org/downloads/release/python-3810/
 * Using `python3.8 -m pip install PackageName`install the following packages:
-  * jupyter
-  * metakernel
-  * scikit-learn
-  * numpy
+  * `jupyter`
+  * `metakernel`
+  * `scikit-learn`
+  * `numpy`
 * Check the installations using `python3.8 -m pip list`
 
 # Order of Operations
