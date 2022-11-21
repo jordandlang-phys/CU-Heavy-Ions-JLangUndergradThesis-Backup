@@ -28,8 +28,15 @@ const bool use_voronoi = false; // Uses Voronoi for jet clustering
 
 
 
-void Pythia_Generator(char* file_name, int func_eventCount, float func_beamPower, float func_ptHatMin,
-                      float func_ptBiasPow, float func_slimMin, float func_slimMax, float func_slimRap) {
+void Pythia_Generator(
+    char* file_name,
+    int func_eventCount,
+    float func_beamPower,
+    float func_ptHatMin,
+    float func_ptBiasPow,
+    float func_slimMin,
+    float func_slimMax,
+    float func_slimRap) {
     
     char file_path[200];
     int temp_int = sprintf(file_path, "%s/Pyth_%s", dir_data, file_name);
@@ -368,7 +375,7 @@ void Thermal_Generator(char* file_name, int func_eventCount) {
     if ( print_out ) std::cout << "File written to and closed." << std::endl;
 }
 
-
+//for (int e = 0 ; e < tree->GetEntries ; e++ ) { tree->GetEntry(e); for (int j = 0 ; j < jet_n ; j++) { temp_hist->Fill(jet_pt[j]) }}
 
 // ----- COMBINE EVENTS -----
 
@@ -663,7 +670,7 @@ void Jet_Clusterer(char* file_name) {
 void Event_Generator(char* file_name, int func_eventCount, float func_beamPower,
                      float func_ptBiasPow, float func_slimMin, float func_slimMax, float func_slimRap) {
     
-    float func_ptHatMin = 0.75 * func_slimMin;
+    float func_ptHatMin = ptHatMin_ptMin_ratio * func_slimMin;
     
     std::cout << ">>> Generate PYTHIA Events <<<" << std::endl;
     Pythia_Generator(file_name, func_eventCount, func_beamPower, func_ptHatMin,
@@ -695,8 +702,26 @@ int main() {
     std::__fs::filesystem::create_directories(dir_plots);
     
     Event_Generator(
-        "10_90_Train_Trees.root", // file name
-        100000,     // number of events to generate
+        "10_90_B0_Train_Trees.root", // file name
+        500000,     // number of events to generate
+        beamPower,  // beam power
+        -1.,        // pt bias power (pt^x), set to -1. to disable bias
+        10.,        // pt min for slimming
+        90.,        // pt max for slimming
+        slim_rap);  // max rapidity for slimming
+    
+    Event_Generator(
+        "10_90_B4_Train_Trees.root", // file name
+        500000,     // number of events to generate
+        beamPower,  // beam power
+        4.,        // pt bias power (pt^x), set to -1. to disable bias
+        10.,        // pt min for slimming
+        90.,        // pt max for slimming
+        slim_rap);  // max rapidity for slimming
+    
+    Event_Generator(
+        "10_90_B8_Train_Trees.root", // file name
+        500000,     // number of events to generate
         beamPower,  // beam power
         8.,        // pt bias power (pt^x), set to -1. to disable bias
         10.,        // pt min for slimming
@@ -704,16 +729,7 @@ int main() {
         slim_rap);  // max rapidity for slimming
     
     Event_Generator(
-        "20_40_Test_Trees.root", // file name
-        100000,     // number of events to generate
-        beamPower,  // beam power
-        -1,        // pt bias power (pt^x), set to -1. to disable bias
-        20.,        // pt min for slimming
-        40.,        // pt max for slimming
-        slim_rap);  // max rapidity for slimming
-    
-    Event_Generator(
-        "40_60_Test_Trees.root", // file name
+        "40_60_B0_Test_Trees.root", // file name
         100000,     // number of events to generate
         beamPower,  // beam power
         -1,        // pt bias power (pt^x), set to -1. to disable bias
@@ -722,12 +738,21 @@ int main() {
         slim_rap);  // max rapidity for slimming
     
     Event_Generator(
-        "60_80_Test_Trees.root", // file name
+        "40_60_B4_Test_Trees.root", // file name
         100000,     // number of events to generate
         beamPower,  // beam power
-        -1,        // pt bias power (pt^x), set to -1. to disable bias
-        60.,        // pt min for slimming
-        80.,        // pt max for slimming
+        4,        // pt bias power (pt^x), set to -1. to disable bias
+        40.,        // pt min for slimming
+        60.,        // pt max for slimming
+        slim_rap);  // max rapidity for slimming
+    
+    Event_Generator(
+        "40_60_B8_Test_Trees.root", // file name
+        100000,     // number of events to generate
+        beamPower,  // beam power
+        8,        // pt bias power (pt^x), set to -1. to disable bias
+        40.,        // pt min for slimming
+        60.,        // pt max for slimming
         slim_rap);  // max rapidity for slimming
     
     return 0;

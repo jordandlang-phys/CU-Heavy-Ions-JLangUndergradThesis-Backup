@@ -25,7 +25,7 @@ const int max_jets = 100;
 const int max_parts = 400;
 //const char* output_file_name = "Jet_ML_Prep.root";
 
-void Jet_ML_Prep(char* file_name, char* output_tree_description, float pt_min, float pt_max) {
+void Jet_ML_Prep(char* file_name, char* output_tree_description, float pt_min, float pt_max, int lowest_jet) {
     
     char output_file_name[200];
     sprintf(output_file_name, "ML_Prep_%s.root", file_name);
@@ -223,7 +223,6 @@ void Jet_ML_Prep(char* file_name, char* output_tree_description, float pt_min, f
         background_area_median  = TMath::Median(background_jet_n, background_jet_area);
         background_pt_median[e] = TMath::Median(background_jet_n, background_jet_pt) * background_area_median;
         background_rho          = TMath::Median(background_jet_n, background_rho_arr);
-//        background_rho = background_pt_median[e] / background_area_median;
         
         jet_const_n_mean[e] = TMath::Mean(jet_const_n_event, jet_const_n_arr);
         jet_const_n_median[e] = TMath::Median(jet_const_n_event, jet_const_n_arr);
@@ -235,7 +234,21 @@ void Jet_ML_Prep(char* file_name, char* output_tree_description, float pt_min, f
         float const_total_pt;
         float const_pythia_pt;
         
-        for ( int j = 0 ; j < jet_n ; j++ ) {
+        if ( lowest_jet == 0 ) lowest_jet = jet_n;
+        
+        for ( int j = 0 ; j < lowest_jet ; j++ ) {
+            
+            // Iterate through pythia jets to match jet pT_true
+            int pythia_match = -1;
+            
+            for ( int k = 0 ; k < p_jet_n ; k++ ) {
+                if ( ( pow((p_jet_y[k] - c_jet_y[j]), 2) + pow((p_jet_phi[k] - c_jet_phi[j]), 2) ) < fj_rSquared) {
+                    pythia_match = k;
+                    if ( debug ) std::cout << "Match found!" << std::endl;
+                }
+            }
+            
+            if ( pythia_match < 0 ) continue;
             
             // Resets values for each iteration
             jet_pt_true_paper[j]    = 0;
@@ -263,16 +276,6 @@ void Jet_ML_Prep(char* file_name, char* output_tree_description, float pt_min, f
             
             const_total_pt = 0.;
             const_pythia_pt = 0.;
-            
-            // Iterate through pythia jets to match jet pT_true
-            int pythia_match = -1;
-            
-            for ( int k = 0 ; k < p_jet_n ; k++ ) {
-                if ( ( pow((p_jet_y[k] - c_jet_y[j]), 2) + pow((p_jet_phi[k] - c_jet_phi[j]), 2) ) < fj_rSquared) {
-                    pythia_match = k;
-                    if ( debug ) std::cout << "Match found!" << std::endl;
-                }
-            }
             
             // Iterate through constituent particles to collect their pT for mean and median
             // This checks EVERY pythia particle in the jet, regardless of the jet match status
@@ -320,7 +323,7 @@ void Jet_ML_Prep(char* file_name, char* output_tree_description, float pt_min, f
             
             jet_pt_true_paper[j]  = jet_pt_raw[j] * (const_pythia_pt / const_total_pt);
             
-            if ( jet_pt_true_paper[j] != 0 && (e % 1000) == 0 ) std::cout << e << "-" << j << ": Truth_Paper Jet: " << jet_pt_true_paper[j] << std::endl;
+//            if ( jet_pt_true_paper[j] != 0 && (e % 1000) == 0 ) std::cout << e << "-" << j << ": Truth_Paper Jet: " << jet_pt_true_paper[j] << std::endl;
             
             if ( pythia_match < 0 ) continue;
             
@@ -368,25 +371,41 @@ void Jet_ML_Prep_ROOT() {
 //        "40_60_Test",
 //        "TESTING data for machine learning. 40-60 GeV with pT^3 bias.",
 //        40., 60.);
+
+    Jet_ML_Prep(
+        "10_90_B0_Train",
+        "TRAINING data for machine learning. 10-90 GeV with no bias.",
+        10., 90.,
+        0); // Top n jets to test (NOT index)
     
     Jet_ML_Prep(
-        "10_90_Train",
-        "TRAINING data for machine learning. 30-80 GeV with pT^3 bias.",
-        10., 90.);
+        "40_60_B0_Test",
+        "TESTING data for machine learning. 40-60 GeV with no bias.",
+        40., 60.,
+        0); // Top n jets to test (NOT index)
     
     Jet_ML_Prep(
-        "20_40_Test",
-        "TESTING data for machine learning. 40-50 GeV with pT^3 bias.",
-        20., 40.);
+        "10_90_B4_Train",
+        "TRAINING data for machine learning. 10-90 GeV with a bias of pT^4.",
+        10., 90.,
+        0); // Top n jets to test (NOT index)
     
     Jet_ML_Prep(
-        "40_60_Test",
-        "TESTING data for machine learning. 50-60 GeV with pT^3 bias.",
-        40., 60.);
+        "40_60_B4_Test",
+        "TESTING data for machine learning. 40-60 GeV with a bias of pT^4.",
+        40., 60.,
+        0); // Top n jets to test (NOT index)
     
     Jet_ML_Prep(
-        "60_80_Test",
-        "TESTING data for machine learning. 50-60 GeV with pT^3 bias.",
-        60., 80.);
+        "10_90_B8_Train",
+        "TRAINING data for machine learning. 10-90 GeV with a bias of pT^8.",
+        10., 90.,
+        0); // Top n jets to test (NOT index)
+    
+    Jet_ML_Prep(
+        "40_60_B8_Test",
+        "TESTING data for machine learning. 40-60 GeV with a bias of pT^8.",
+        40., 60.,
+        0); // Top n jets to test (NOT index)
     
 }

@@ -22,8 +22,7 @@ const double m_pion         = 0.1396;           // Pion+/- mass in GeV
 // PYTHIA Settings
 const float  beamPower      = 2760.;            // Beam eCM, [GeV]
 const float  ptJetMin       = 20.;              // Minimum jet pT, [GeV]
-const float  ptHatMin       = 20.;              // Total pT minimum, [GeV]
-const float  ptBiasPow      = 1.;                // pT is biased by this power
+const float  ptHatMin_ptMin_ratio = 0.75;       // Total pT minimum, [GeV]
 const bool   slimJets       = true;             // If true, slims jets to satsify conditions
 const double slim_pt_min    = 40.;              // Min E for jet slimming, [GeV]
 const double slim_pt_max    = 60.;              // Max E for jet slimming, [GeV]
@@ -46,7 +45,7 @@ const char* input_source = "combined";
 
 // General Directories
 char  dir_master[200];
-int n1 = sprintf(dir_master, "../Files/ALICE_kinematics_trial%i", trialNum);
+int n1 = sprintf(dir_master, "../Files/Comparison_Trial");
 //int n1 = sprintf(dir_master, "../_Files/N-%i_beam-%i_ptMin-%i_ptHatMin-%i_ptBias-%i_gaus-%i_sigma-%i_modHag_trial%i",
 //    nEvent, int(beamPower), int(ptJetMin), int(ptHatMin), int(ptBiasPow), gaus_mean, gaus_sigma, 1);
 

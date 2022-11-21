@@ -80,9 +80,13 @@ void Plot_ML_pT_Comparison(
     bool bool_compareToPaper
     ) {
     
+    char feature_list_1[2][100];
+    sprintf(feature_list_1[0], "#scale[0.6]{Feature Importance}");
+    sprintf(feature_list_1[1], "#scale[0.6]{#bf{Jet p_{T, raw}:}}");
+    
     char feature_list_3[4][100];
     sprintf(feature_list_3[0], "#scale[0.6]{Feature Importance}");
-    sprintf(feature_list_3[1], "#scale[0.6]{#bf{Jet p_{T, corr}:}}");
+    sprintf(feature_list_3[1], "#scale[0.6]{#bf{Jet p_{T, raw}:}}");
     sprintf(feature_list_3[2], "#scale[0.6]{#bf{Jet area:}}");
     sprintf(feature_list_3[3], "#scale[0.6]{#bf{Jet #rho:}}");
 
@@ -97,18 +101,20 @@ void Plot_ML_pT_Comparison(
     sprintf(feature_list_8[7], "#scale[0.6]{#bf{p_{T, Const.}^{3}:}}");
     sprintf(feature_list_8[8], "#scale[0.6]{#bf{p_{T, Const.}^{4}:}}");
 
-    char feature_list_10[11][100];
-    sprintf(feature_list_10[0], "#scale[0.6]{Feature Importance}");
-    sprintf(feature_list_10[1], "#scale[0.6]{#bf{Jet p_{T, corr}:}}");
-    sprintf(feature_list_10[2], "#scale[0.6]{#bf{Jet Mass:}}");
-    sprintf(feature_list_10[3], "#scale[0.6]{#bf{Jet Area:}}");
-    sprintf(feature_list_10[4], "#scale[0.6]{#bf{N_{const}:}}");
-    sprintf(feature_list_10[5], "#scale[0.6]{#bf{Mean Const. p_{T}:}}");
-    sprintf(feature_list_10[6], "#scale[0.6]{#bf{p_{T, Const.}^{1}:}}");
-    sprintf(feature_list_10[7], "#scale[0.6]{#bf{p_{T, Const.}^{2}:}}");
-    sprintf(feature_list_10[8], "#scale[0.6]{#bf{p_{T, Const.}^{3}:}}");
-    sprintf(feature_list_10[9], "#scale[0.6]{#bf{Jet y:}}");
-    sprintf(feature_list_10[10], "#scale[0.6]{#bf{Jet #rho:}}");
+    char feature_list_12[13][100];
+    sprintf(feature_list_12[0], "#scale[0.6]{Feature Importance}");
+    sprintf(feature_list_12[1], "#scale[0.6]{#bf{Jet p_{T, raw}:}}");
+    sprintf(feature_list_12[2], "#scale[0.6]{#bf{Jet p_{T, corr}:}}");
+    sprintf(feature_list_12[3], "#scale[0.6]{#bf{Jet Mass:}}");
+    sprintf(feature_list_12[4], "#scale[0.6]{#bf{Jet Area:}}");
+    sprintf(feature_list_12[5], "#scale[0.6]{#bf{N_{const}:}}");
+    sprintf(feature_list_12[6], "#scale[0.6]{#bf{Mean Const. p_{T}:}}");
+    sprintf(feature_list_12[7], "#scale[0.6]{#bf{p_{T, Const.}^{1}:}}");
+    sprintf(feature_list_12[8], "#scale[0.6]{#bf{p_{T, Const.}^{2}:}}");
+    sprintf(feature_list_12[9], "#scale[0.6]{#bf{p_{T, Const.}^{3}:}}");
+    sprintf(feature_list_12[10], "#scale[0.6]{#bf{p_{T, Const.}^{4}:}}");
+    sprintf(feature_list_12[11], "#scale[0.6]{#bf{Jet y:}}");
+    sprintf(feature_list_12[12], "#scale[0.6]{#bf{Jet #rho:}}");
     
     double x_min  = th1d_simple_correction->GetXaxis()->GetXmin();
     double x_max  = th1d_simple_correction->GetXaxis()->GetXmax();
@@ -118,7 +124,7 @@ void Plot_ML_pT_Comparison(
         for ( int i = 0 ; i < 4 ; i++ ) {
             if ( y_max < max_arr[i] ) y_max = max_arr[i];
         }
-        if (bool_compareToPaper) y_max = 0.20;
+        if (bool_compareToPaper) y_max = 0.15;
     }
     
     TH1D* th1d_canvas_plot = new TH1D("th1d_canvas_plot", plot_title_xlabel_ylabel, x_bins, x_min, x_max);
@@ -260,9 +266,22 @@ void Plot_ML_pT_Comparison(
     }
     if ( showFeatures == "features" ) {
         int  feature_count = th1d_feature_list->GetNbinsX();
+        char feature_vals_1[2][100];
         char feature_vals_3[4][100];
         char feature_vals_8[9][100];
-        char feature_vals_10[11][100];
+        char feature_vals_12[13][100];
+        
+        if (feature_count == 1) {
+            sprintf(feature_vals_1[0], "#scale[0.6]{}");
+            sprintf(feature_vals_1[1], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(1));
+            
+            for ( int i = 0 ; i <= 1 ; i++ ) {
+                latex->DrawLatex(0.63, (.813 - 0.0494 * i), feature_list_1[i]);
+            }
+            for ( int i = 0 ; i <= 1 ; i++ ) {
+                latex->DrawLatex(0.80, (.813 - 0.0494 * i), feature_vals_3[i]);
+            }
+        }
         
         if (feature_count == 3) {
             sprintf(feature_vals_3[0], "#scale[0.6]{}");
@@ -295,24 +314,26 @@ void Plot_ML_pT_Comparison(
                 latex->DrawLatex(0.80, (.813 - 0.0494 * i), feature_vals_8[i]);
             }
         }
-        if (feature_count == 10) {
-            sprintf(feature_vals_10[0], "#scale[0.6]{}");
-            sprintf(feature_vals_10[1], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(1));
-            sprintf(feature_vals_10[2], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(2));
-            sprintf(feature_vals_10[3], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(3));
-            sprintf(feature_vals_10[4], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(4));
-            sprintf(feature_vals_10[5], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(5));
-            sprintf(feature_vals_10[6], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(6));
-            sprintf(feature_vals_10[7], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(7));
-            sprintf(feature_vals_10[8], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(8));
-            sprintf(feature_vals_10[9], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(7));
-            sprintf(feature_vals_10[10], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(8));
+        if (feature_count == 12) {
+            sprintf(feature_vals_12[0], "#scale[0.6]{}");
+            sprintf(feature_vals_12[1], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(1));
+            sprintf(feature_vals_12[2], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(2));
+            sprintf(feature_vals_12[3], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(3));
+            sprintf(feature_vals_12[4], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(4));
+            sprintf(feature_vals_12[5], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(5));
+            sprintf(feature_vals_12[6], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(6));
+            sprintf(feature_vals_12[7], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(7));
+            sprintf(feature_vals_12[8], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(8));
+            sprintf(feature_vals_12[9], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(7));
+            sprintf(feature_vals_12[10], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(8));
+            sprintf(feature_vals_12[11], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(7));
+            sprintf(feature_vals_12[12], "#scale[0.6]{#bf{%1.3f}}", th1d_feature_list->GetBinContent(8));
             
-            for ( int i = 0 ; i <= 10 ; i++ ) {
-                latex->DrawLatex(0.63, (.813 - 0.0494 * i), feature_list_10[i]);
+            for ( int i = 0 ; i <= 12 ; i++ ) {
+                latex->DrawLatex(0.63, (.813 - 0.0494 * i), feature_list_12[i]);
             }
-            for ( int i = 0 ; i <= 10 ; i++ ) {
-                latex->DrawLatex(0.80, (.813 - 0.0494 * i), feature_vals_10[i]);
+            for ( int i = 0 ; i <= 12 ; i++ ) {
+                latex->DrawLatex(0.80, (.813 - 0.0494 * i), feature_vals_12[i]);
             }
         }
     }
@@ -387,20 +408,25 @@ void Jet_ML_Plotter(
         }
     }
     
-    sprintf(th1d_feature_importance, "th1d_%i_%i_%s", int(pt_min), int(pt_max), th1d_name_arr[0]);
+    sprintf(th1d_feature_importance, "%s", th1d_name_arr[0]);
     th1d_feature_importance_list    = (TH1D*) input_file->Get(th1d_feature_importance);
-
-    sprintf(th1d_simple_correction, "th1d_%i_%i_%s", int(pt_min), int(pt_max), th1d_name_arr[1]);
+    std::cout << "Imported " << th1d_name_arr[0] << std::endl;
+    sprintf(th1d_simple_correction, "%s", th1d_name_arr[1]);
     th1d_simple_correction_plot     = (TH1D*) input_file->Get(th1d_simple_correction);
-
-    sprintf(th1d_linear_regression, "th1d_%i_%i_%s", int(pt_min), int(pt_max), th1d_name_arr[2]);
+    
+    TCanvas* canvas_temp = new TCanvas("canvas", "", 1000, 600);
+    th1d_simple_correction_plot->Draw();
+    
+    sprintf(th1d_linear_regression, "%s", th1d_name_arr[2]);
     th1d_linear_regression_plot     = (TH1D*) input_file->Get(th1d_linear_regression);
 
-    sprintf(th1d_random_forest,     "th1d_%i_%i_%s", int(pt_min), int(pt_max), th1d_name_arr[3]);
+    sprintf(th1d_random_forest, "%s", th1d_name_arr[3]);
     th1d_random_forest_plot         = (TH1D*) input_file->Get(th1d_random_forest);
 
-    sprintf(th1d_neural_network,    "th1d_%i_%i_%s", int(pt_min), int(pt_max), th1d_name_arr[4]);
+    sprintf(th1d_neural_network, "%s", th1d_name_arr[4]);
     th1d_neural_network_plot        = (TH1D*) input_file->Get(th1d_neural_network);
+    
+    std::cout << "Histograms imported." << std::endl;
     
     if ( bool_normalize || bool_compareToPaper ) {
         th1d_simple_correction_plot     ->Scale( 1. / th1d_simple_correction_plot->Integral(),"WIDTH");
@@ -408,6 +434,8 @@ void Jet_ML_Plotter(
         th1d_random_forest_plot         ->Scale( 1. / th1d_random_forest_plot->Integral(),"WIDTH");
         th1d_neural_network_plot        ->Scale( 1. / th1d_neural_network_plot->Integral(),"WIDTH");
     }
+    
+    std::cout << "Histograms normalized." << std::endl;
     
     char* char_showFeatures = "";
     if ( bool_showFeatures ) char_showFeatures = "features";
@@ -622,21 +650,93 @@ void Jet_Truth_Plotter(
 
 
 
+void Jet_ptTrue_Distribution_Plotter (
+    char* input_file_name,
+    char* plot_tree_name,
+    char* plot_dir_name,
+    float train_pt_min, float train_pt_max
+    ) {
+
+    float x_min = train_pt_min;
+    float x_max = train_pt_max;
+    int x_bins = int((x_max - x_min) / 1);
+    char plot_file_name[100];
+    sprintf(plot_file_name, "%s.pdf", plot_tree_name);
+
+    // Opens and reads the Root output file
+    char input_file_path[200];
+    sprintf(input_file_path, "%s/%s", dir_data, input_file_name);
+    TFile* input_file = new TFile(input_file_path, "READ");
+    TTree* input_tree = (TTree*) input_file->Get("Tree_ML");
+    std::cout << "Input file read." << std::endl;
+
+    char subdir_plots [200];
+    sprintf(subdir_plots, "%s/MachineLearning/%s", dir_plots, plot_dir_name);
+    std::__fs::filesystem::create_directories(subdir_plots);
+
+    TH1D* th1d_truth_distribution_plot     = (TH1D*) input_file->Get(plot_tree_name);
+
+    std::cout << "MADE IT HERE!" << std::endl;
+
+    // TCanvas("name", "title", width (px), height (px))
+    TCanvas* canvas = new TCanvas("canvas", "", 1000, 600);
+    th1d_truth_distribution_plot->SetAxisRange(100, 1000000, "Y");
+
+    // Turns on ticks, turns off stats
+    gPad->SetTicks();
+    gStyle->SetOptStat(0);
+    gPad->SetLogy(1);
+
+    // Turns on Latex formatting relative to canvas
+    TLatex* latex = new TLatex();
+    latex->SetNDC(kTRUE);
+
+    // Build histogram plot
+    th1d_truth_distribution_plot->SetLineColor(jet_blk_line);
+    th1d_truth_distribution_plot->SetMarkerColor(jet_blk_mark);
+    th1d_truth_distribution_plot->SetMarkerStyle(mark_circ_open[0]);
+    th1d_truth_distribution_plot->SetMarkerSize(mark_circ_open[1]);
+
+    // Draws the histograms and lines
+    th1d_truth_distribution_plot->Draw();
+
+    // Draws Legend as TLegend(xmin, ymin, xmax, ymax)
+    TLegend* legend;
+    legend = new TLegend(0.15, 0.80, 0.3, 0.85);
+    legend->AddEntry(th1d_truth_distribution_plot, "p_{T}^{True}", "lp");
+    legend->SetLineWidth(0);
+    legend->SetFillStyle(0);
+    legend->Draw();
+
+    // Prints out the plot
+    char plot_output[300];
+    sprintf(plot_output, "%s/MachineLearning/%s/%s", dir_plots, plot_dir_name, plot_file_name);
+    canvas->Print(plot_output);
+    std::cout << "Plotted " << plot_file_name << std::endl;
+    gPad->SetLogy(0);
+
+    return 0;
+}
+
+
 
 void Jet_ML_Analyzer_ROOT() {
-
-    // Training with 12 features
+    
+    // --- Training with NO Bias (B0)
+    
+    // 1 Feature Test
+    
     char* th1d_name_arr_1[5] = {
-        "Tree_40_60_Test_12feat_ptTruePythia_feature_importance",
-        "Tree_40_60_Test_12feat_ptTruePythia_simple_correction",
-        "Tree_40_60_Test_12feat_ptTruePythia_linear_regression",
-        "Tree_40_60_Test_12feat_ptTruePythia_random_forest",
-        "Tree_40_60_Test_12feat_ptTruePythia_neural_network"};
+        "th1d_Tree_40_60_B0_Test_1feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B0_Test_1feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B0_Test_1feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B0_Test_1feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B0_Test_1feat_ptTruePythia_neural_network"};
     Jet_ML_Plotter(
-        "ML_Results_10_90.root", // input file name
+        "ResultsML_Results_10_90_B0_Train.root", // input file name
         th1d_name_arr_1, // th1d_name_arr array of tree names
-        "th1d_jet_pt_delta_12feat_ptTruePythia.pdf", // plot file name
-        "12feature_ptTruePythia", // pt_test_bin base name
+        "th1d_jet_pt_delta_1feat_B0_Train_40_60_B0_Test.pdf", // plot file name
+        "1feature_40-60", // pt_test_bin base name
         40., 60., // pt_min, pt_max
         true, // bool_showLegend
         true, // bool_showFeatures
@@ -645,161 +745,535 @@ void Jet_ML_Analyzer_ROOT() {
         "Pythia" // truth source
         );
     
-    Jet_Truth_Plotter(
-        "ML_Results_10_90_Tree_40_60_Test_12feat_ptTruePythia.root", //  input file name
-        "th1d_10_90_Tree_40_60_Test_12feat_ptTruePythia.pdf", // plot file name
-        "12feature_ptTruePythia", // pt_test_bin base name
+    char* th1d_name_arr_2[5] = {
+        "th1d_Tree_40_60_B4_Test_1feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B4_Test_1feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B4_Test_1feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B4_Test_1feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B4_Test_1feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B0_Train.root", // input file name
+        th1d_name_arr_2, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_1feat_B0_Train_40_60_B4_Test.pdf", // plot file name
+        "1feature_40-60", // pt_test_bin base name
         40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
         "Pythia" // truth source
         );
     
-//    // Training with 8 features
-//    char* th1d_name_arr_1[5] = {
-//        "Test_8feat_ptTruePythia_feature_importance",
-//        "Test_8feat_ptTruePythia_simple_correction",    "Test_8feat_ptTruePythia_linear_regression",
-//        "Test_8feat_ptTruePythia_random_forest",        "Test_8feat_ptTruePythia_neural_network"};
-//    Jet_ML_Plotter(
-//        "ML_Results.root", // input file name
-//        th1d_name_arr_1, // th1d_name_arr array of tree names
-//        "th1d_jet_pt_delta_8feat_ptTruePythia.pdf", // plot file name
-//        "8feature_ptTruePythia", // pt_train_bin base name
-//        40., 60., // pt_min, pt_max
-//        true, //bool_showLegend
-//        true, // bool_showFeatures
-//        true, // bool_normalize,
-//        true, // bool_compareToPaper
-//        "Pythia"); // truth source
-//
-//    char* th1d_name_arr_2[5] = {
-//        "Test_8feat_ptTruePaper_feature_importance",
-//        "Test_8feat_ptTruePaper_simple_correction",   "Test_8feat_ptTruePaper_linear_regression",
-//        "Test_8feat_ptTruePaper_random_forest",       "Test_8feat_ptTruePaper_neural_network"};
-//    Jet_ML_Plotter(
-//        "ML_Results.root", // input file name
-//        th1d_name_arr_2, // th1d_name_arr array of tree names
-//        "th1d_jet_pt_delta_8feat_ptTruePaper.pdf", // plot file name
-//        "8feature_ptTruePaper", // pt_train_bin base name
-//        40., 60., // pt_min, pt_max
-//        true, //bool_showLegend
-//        true, // bool_showFeatures
-//        true, // bool_normalize,
-//        true, // bool_compareToPaper
-//        "Paper"); // truth source
-//
-//    // Training with 3 features
-//    char* th1d_name_arr_3[5] = {
-//        "Test_3feat_ptTruePythia_feature_importance",
-//        "Test_3feat_ptTruePythia_simple_correction",  "Test_3feat_ptTruePythia_linear_regression",
-//        "Test_3feat_ptTruePythia_random_forest",      "Test_3feat_ptTruePythia_neural_network"};
-//    Jet_ML_Plotter(
-//        "ML_Results.root", // input file name
-//        th1d_name_arr_3, // th1d_name_arr array of tree names
-//        "th1d_jet_pt_delta_3feat_ptTruePythia.pdf", // plot file name
-//        "3feature_ptTruePythia", // pt_train_bin base name
-//        40., 60., // pt_min, pt_max
-//        true, //bool_showLegend
-//        true, // bool_showFeatures
-//        true, // bool_normalize,
-//        true, // bool_compareToPaper
-//        "Pythia"); // truth source
-//
-//    char* th1d_name_arr_4[5] = {
-//        "Test_3feat_ptTruePaper_feature_importance",
-//        "Test_3feat_ptTruePaper_simple_correction",   "Test_3feat_ptTruePaper_linear_regression",
-//        "Test_3feat_ptTruePaper_random_forest",       "Test_3feat_ptTruePaper_neural_network"};
-//    Jet_ML_Plotter(
-//        "ML_Results.root", // input file name
-//        th1d_name_arr_4, // th1d_name_arr array of tree names
-//        "th1d_jet_pt_delta_3feat_ptTruePaper.pdf", // plot file name
-//        "3feature_ptTruePaper", // pt_train_bin base name
-//        40., 60., // pt_min, pt_max
-//        true, //bool_showLegend
-//        true, // bool_showFeatures
-//        true, // bool_normalize,
-//        true, // bool_compareToPaper
-//        "Paper"); // truth source
+    char* th1d_name_arr_3[5] = {
+        "th1d_Tree_40_60_B8_Test_1feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B8_Test_1feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B8_Test_1feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B8_Test_1feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B8_Test_1feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B0_Train.root", // input file name
+        th1d_name_arr_3, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_1feat_B0_Train_40_60_B4_Test.pdf", // plot file name
+        "1feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    // 3 Feature Test
+    
+    char* th1d_name_arr_4[5] = {
+        "th1d_Tree_40_60_B0_Test_3feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B0_Test_3feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B0_Test_3feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B0_Test_3feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B0_Test_3feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B0_Train.root", // input file name
+        th1d_name_arr_4, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_3feat_B0_Train_40_60_B0_Test.pdf", // plot file name
+        "3feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    char* th1d_name_arr_5[5] = {
+        "th1d_Tree_40_60_B4_Test_3feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B4_Test_3feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B4_Test_3feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B4_Test_3feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B4_Test_3feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B0_Train.root", // input file name
+        th1d_name_arr_5, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_3feat_B0_Train_40_60_B4_Test.pdf", // plot file name
+        "3feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    char* th1d_name_arr_6[5] = {
+        "th1d_Tree_40_60_B8_Test_3feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B8_Test_3feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B8_Test_3feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B8_Test_3feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B8_Test_3feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B0_Train.root", // input file name
+        th1d_name_arr_6, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_3feat_B0_Train_40_60_B8_Test.pdf", // plot file name
+        "3feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    // 12 Feature Test
+    
+    char* th1d_name_arr_7[5] = {
+        "th1d_Tree_40_60_B0_Test_12feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B0_Test_12feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B0_Test_12feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B0_Test_12feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B0_Test_12feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B0_Train.root", // input file name
+        th1d_name_arr_7, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_12feat_B0_Train_40_60_B0_Test.pdf", // plot file name
+        "12feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    char* th1d_name_arr_8[5] = {
+        "th1d_Tree_40_60_B4_Test_12feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B4_Test_12feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B4_Test_12feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B4_Test_12feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B4_Test_12feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B0_Train.root", // input file name
+        th1d_name_arr_8, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_12feat_B0_Train_40_60_B4_Test.pdf", // plot file name
+        "12feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    char* th1d_name_arr_9[5] = {
+        "th1d_Tree_40_60_B8_Test_12feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B8_Test_12feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B8_Test_12feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B8_Test_12feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B8_Test_12feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B0_Train.root", // input file name
+        th1d_name_arr_9, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_12feat_B0_Train_40_60_B8_Test.pdf", // plot file name
+        "12feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    // --- Training with pT^4 Bias (B4)
+    
+    // 1 Feature Test
+    
+    char* th1d_name_arr_11[5] = {
+        "th1d_Tree_40_60_B0_Test_1feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B0_Test_1feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B0_Test_1feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B0_Test_1feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B0_Test_1feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B4_Train.root", // input file name
+        th1d_name_arr_11, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_1feat_B4_Train_40_60_B0_Test.pdf", // plot file name
+        "1feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    char* th1d_name_arr_12[5] = {
+        "th1d_Tree_40_60_B4_Test_1feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B4_Test_1feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B4_Test_1feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B4_Test_1feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B4_Test_1feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B4_Train.root", // input file name
+        th1d_name_arr_12, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_1feat_B4_Train_40_60_B4_Test.pdf", // plot file name
+        "1feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    char* th1d_name_arr_13[5] = {
+        "th1d_Tree_40_60_B8_Test_1feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B8_Test_1feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B8_Test_1feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B8_Test_1feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B8_Test_1feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B4_Train.root", // input file name
+        th1d_name_arr_13, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_1feat_B4_Train_40_60_B8_Test.pdf", // plot file name
+        "1feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    // 3 Feature Test
+    
+    char* th1d_name_arr_14[5] = {
+        "th1d_Tree_40_60_B0_Test_3feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B0_Test_3feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B0_Test_3feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B0_Test_3feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B0_Test_3feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B4_Train.root", // input file name
+        th1d_name_arr_14, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_3feat_B4_Train_40_60_B0_Test.pdf", // plot file name
+        "3feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    char* th1d_name_arr_15[5] = {
+        "th1d_Tree_40_60_B4_Test_3feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B4_Test_3feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B4_Test_3feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B4_Test_3feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B4_Test_3feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B4_Train.root", // input file name
+        th1d_name_arr_15, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_3feat_B4_Train_40_60_B4_Test.pdf", // plot file name
+        "3feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    char* th1d_name_arr_16[5] = {
+        "th1d_Tree_40_60_B8_Test_3feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B8_Test_3feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B8_Test_3feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B8_Test_3feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B8_Test_3feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B4_Train.root", // input file name
+        th1d_name_arr_16, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_3feat_B4_Train_40_60_B8_Test.pdf", // plot file name
+        "3feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    // 12 Feature Test
+    
+    char* th1d_name_arr_17[5] = {
+        "th1d_Tree_40_60_B0_Test_12feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B0_Test_12feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B0_Test_12feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B0_Test_12feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B0_Test_12feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B4_Train.root", // input file name
+        th1d_name_arr_17, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_12feat_B4_Train_40_60_B0_Test.pdf", // plot file name
+        "12feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    char* th1d_name_arr_18[5] = {
+        "th1d_Tree_40_60_B4_Test_12feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B4_Test_12feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B4_Test_12feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B4_Test_12feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B4_Test_12feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B4_Train.root", // input file name
+        th1d_name_arr_18, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_12feat_B4_Train_40_60_B4_Test.pdf", // plot file name
+        "12feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    char* th1d_name_arr_19[5] = {
+        "th1d_Tree_40_60_B8_Test_12feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B8_Test_12feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B8_Test_12feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B8_Test_12feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B8_Test_12feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B4_Train.root", // input file name
+        th1d_name_arr_19, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_12feat_B4_Train_40_60_B8_Test.pdf", // plot file name
+        "12feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    // --- Training with pT^8 Bias (B48)
+    
+    // 1 Feature Test
+    
+    char* th1d_name_arr_21[5] = {
+        "th1d_Tree_40_60_B0_Test_1feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B0_Test_1feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B0_Test_1feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B0_Test_1feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B0_Test_1feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B8_Train.root", // input file name
+        th1d_name_arr_21, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_1feat_B8_Train_40_60_B0_Test.pdf", // plot file name
+        "1feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    char* th1d_name_arr_22[5] = {
+        "th1d_Tree_40_60_B4_Test_1feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B4_Test_1feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B4_Test_1feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B4_Test_1feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B4_Test_1feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B8_Train.root", // input file name
+        th1d_name_arr_22, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_1feat_B8_Train_40_60_B4_Test.pdf", // plot file name
+        "1feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    char* th1d_name_arr_23[5] = {
+        "th1d_Tree_40_60_B8_Test_1feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B8_Test_1feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B8_Test_1feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B8_Test_1feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B8_Test_1feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B8_Train.root", // input file name
+        th1d_name_arr_23, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_1feat_B8_Train_40_60_B8_Test.pdf", // plot file name
+        "1feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    // 3 Feature Test
+    
+    char* th1d_name_arr_24[5] = {
+        "th1d_Tree_40_60_B0_Test_3feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B0_Test_3feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B0_Test_3feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B0_Test_3feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B0_Test_3feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B8_Train.root", // input file name
+        th1d_name_arr_24, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_3feat_B8_Train_40_60_B0_Test.pdf", // plot file name
+        "3feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    char* th1d_name_arr_25[5] = {
+        "th1d_Tree_40_60_B4_Test_3feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B4_Test_3feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B4_Test_3feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B4_Test_3feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B4_Test_3feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B8_Train.root", // input file name
+        th1d_name_arr_25, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_3feat_B8_Train_40_60_B4_Test.pdf", // plot file name
+        "3feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    char* th1d_name_arr_26[5] = {
+        "th1d_Tree_40_60_B8_Test_3feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B8_Test_3feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B8_Test_3feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B8_Test_3feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B8_Test_3feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B8_Train.root", // input file name
+        th1d_name_arr_26, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_3feat_B8_Train_40_60_B8_Test.pdf", // plot file name
+        "3feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    // 12 Feature Test
+    
+    char* th1d_name_arr_27[5] = {
+        "th1d_Tree_40_60_B0_Test_12feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B0_Test_12feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B0_Test_12feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B0_Test_12feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B0_Test_12feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B8_Train.root", // input file name
+        th1d_name_arr_27, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_12feat_B8_Train_40_60_B0_Test.pdf", // plot file name
+        "12feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    char* th1d_name_arr_28[5] = {
+        "th1d_Tree_40_60_B4_Test_12feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B4_Test_12feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B4_Test_12feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B4_Test_12feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B4_Test_12feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B8_Train.root", // input file name
+        th1d_name_arr_28, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_12feat_B8_Train_40_60_B4_Test.pdf", // plot file name
+        "12feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+    char* th1d_name_arr_29[5] = {
+        "th1d_Tree_40_60_B8_Test_12feat_ptTruePythia_feature_importance",
+        "th1d_Tree_40_60_B8_Test_12feat_ptTruePythia_simple_correction",
+        "th1d_Tree_40_60_B8_Test_12feat_ptTruePythia_linear_regression",
+        "th1d_Tree_40_60_B8_Test_12feat_ptTruePythia_random_forest",
+        "th1d_Tree_40_60_B8_Test_12feat_ptTruePythia_neural_network"};
+    Jet_ML_Plotter(
+        "ResultsML_Results_10_90_B8_Train.root", // input file name
+        th1d_name_arr_29, // th1d_name_arr array of tree names
+        "th1d_jet_pt_delta_12feat_B8_Train_40_60_B8_Test.pdf", // plot file name
+        "12feature_40-60", // pt_test_bin base name
+        40., 60., // pt_min, pt_max
+        true, // bool_showLegend
+        true, // bool_showFeatures
+        true, // bool_normalize,
+        true, // bool_compareToPaper
+        "Pythia" // truth source
+        );
+    
+//    Jet_ptTrue_Distribution_Plotter(
+//        "ML_Results_20_80.root", // input file name
+//        "th1_20_80_Train_ptTrue_distribution", // plot tree name
+//        "12feature_20-80", // pt_test_bin base name
+//        20., 80. // pt_min, pt_max
+//        );
 //
 //    Jet_Truth_Plotter(
-//        "ML_Results_40_60_Test_8feat_ptTruePaper.root",
-//        "th1d_train_40_60_pt_true.pdf",
-//        "8feature_ptTruePaper",
-//        40., 60.,
-//        "Paper"
+//        "ML_Results_10_90_Tree_40_60_Test_12feat_ptTruePythia.root", //  input file name
+//        "th1d_10_90_Tree_40_60_Test_12feat_ptTruePythia.pdf", // plot file name
+//        "12feature_ptTruePythia", // pt_test_bin base name
+//        40., 60., // pt_min, pt_max
+//        "Pythia" // truth source
 //        );
-//
-//    // Training with 8 features
-//    Jet_Test_Range_Plotter(
-//        "ML_Results_40_60_Test_8feat_ptTruePaper.root", // input_file_name
-//        "th1d_train_40_60_test_40_60.pdf",
-//        "8feature_ptTruePaper", // plot_dir_name for output
-//        40., 60., // train_pt_min/max
-//        40., 60., // test_pt_min/max
-//        "Paper"
-//        );
-//
-//    Jet_Test_Range_Plotter(
-//        "ML_Results_40_60_Test_8feat_ptTruePaper.root", // input_file_name
-//        "th1d_train_40_60_test_40_42.pdf",
-//        "8feature_ptTruePaper", // plot_dir_name for output
-//        40., 60., // train_pt_min/max
-//        40., 42., // test_pt_min/max
-//        "Paper"
-//        );
-//
-//    Jet_Test_Range_Plotter(
-//        "ML_Results_40_60_Test_8feat_ptTruePaper.root", // input_file_name
-//        "th1d_train_40_60_test_49_51.pdf",
-//        "8feature_ptTruePaper", // plot_dir_name for output
-//        40., 60., // train_pt_min/max
-//        49., 51., // test_pt_min/max
-//        "Paper"
-//        );
-//
-//    Jet_Test_Range_Plotter(
-//        "ML_Results_40_60_Test_8feat_ptTruePaper.root", // input_file_name
-//        "th1d_train_40_60_test_58_60.pdf",
-//        "8feature_ptTruePaper", // plot_dir_name for output
-//        40., 60., // train_pt_min/max
-//        58., 60., // test_pt_min/max
-//        "Paper"
-//        );
-//
-//    // Training with 3 features
-//    Jet_Test_Range_Plotter(
-//        "ML_Results_40_60_Test_3feat_ptTruePaper.root", // input_file_name
-//        "th1d_train_40_60_test_40_60.pdf",
-//        "3feature_ptTruePaper", // plot_dir_name for output
-//        40., 60., // train_pt_min/max
-//        40., 60., // test_pt_min/max
-//        "Paper"
-//        );
-//
-//    Jet_Test_Range_Plotter(
-//        "ML_Results_40_60_Test_3feat_ptTruePaper.root", // input_file_name
-//        "th1d_train_40_60_test_40_42.pdf",
-//        "3feature_ptTruePaper", // plot_dir_name for output
-//        40., 60., // train_pt_min/max
-//        40., 42., // test_pt_min/max
-//        "Paper"
-//        );
-//
-//    Jet_Test_Range_Plotter(
-//        "ML_Results_40_60_Test_3feat_ptTruePaper.root", // input_file_name
-//        "th1d_train_40_60_test_49_51.pdf",
-//        "3feature_ptTruePaper", // plot_dir_name for output
-//        40., 60., // train_pt_min/max
-//        49., 51., // test_pt_min/max
-//        "Paper"
-//        );
-//
-//    Jet_Test_Range_Plotter(
-//        "ML_Results_40_60_Test_3feat_ptTruePaper.root", // input_file_name
-//        "th1d_train_40_60_test_58_60.pdf",
-//        "3feature_ptTruePaper", // plot_dir_name for output
-//        40., 60., // train_pt_min/max
-//        58., 60., // test_pt_min/max
-//        "Paper"
-//        );
+
 }
 
 
