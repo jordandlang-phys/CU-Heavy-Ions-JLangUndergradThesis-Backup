@@ -702,25 +702,7 @@ int main() {
     std::__fs::filesystem::create_directories(dir_plots);
     
     Event_Generator(
-        "10_90_B0_Train_Trees.root", // file name
-        500000,     // number of events to generate
-        beamPower,  // beam power
-        -1.,        // pt bias power (pt^x), set to -1. to disable bias
-        10.,        // pt min for slimming
-        90.,        // pt max for slimming
-        slim_rap);  // max rapidity for slimming
-    
-    Event_Generator(
-        "10_90_B4_Train_Trees.root", // file name
-        500000,     // number of events to generate
-        beamPower,  // beam power
-        4.,        // pt bias power (pt^x), set to -1. to disable bias
-        10.,        // pt min for slimming
-        90.,        // pt max for slimming
-        slim_rap);  // max rapidity for slimming
-    
-    Event_Generator(
-        "10_90_B8_Train_Trees.root", // file name
+        "10_90_B8_Test_Trees.root", // file name
         500000,     // number of events to generate
         beamPower,  // beam power
         8.,        // pt bias power (pt^x), set to -1. to disable bias
@@ -728,32 +710,59 @@ int main() {
         90.,        // pt max for slimming
         slim_rap);  // max rapidity for slimming
     
-    Event_Generator(
-        "40_60_B0_Test_Trees.root", // file name
-        100000,     // number of events to generate
-        beamPower,  // beam power
-        -1,        // pt bias power (pt^x), set to -1. to disable bias
-        40.,        // pt min for slimming
-        60.,        // pt max for slimming
-        slim_rap);  // max rapidity for slimming
+//    Event_Generator(
+//        "10_90_B0_Train_Trees.root", // file name
+//        500000,     // number of events to generate
+//        beamPower,  // beam power
+//        -1.,        // pt bias power (pt^x), set to -1. to disable bias
+//        10.,        // pt min for slimming
+//        90.,        // pt max for slimming
+//        slim_rap);  // max rapidity for slimming
     
-    Event_Generator(
-        "40_60_B4_Test_Trees.root", // file name
-        100000,     // number of events to generate
-        beamPower,  // beam power
-        4,        // pt bias power (pt^x), set to -1. to disable bias
-        40.,        // pt min for slimming
-        60.,        // pt max for slimming
-        slim_rap);  // max rapidity for slimming
-    
-    Event_Generator(
-        "40_60_B8_Test_Trees.root", // file name
-        100000,     // number of events to generate
-        beamPower,  // beam power
-        8,        // pt bias power (pt^x), set to -1. to disable bias
-        40.,        // pt min for slimming
-        60.,        // pt max for slimming
-        slim_rap);  // max rapidity for slimming
+//    Event_Generator(
+//        "10_90_B4_Train_Trees.root", // file name
+//        500000,     // number of events to generate
+//        beamPower,  // beam power
+//        4.,        // pt bias power (pt^x), set to -1. to disable bias
+//        10.,        // pt min for slimming
+//        90.,        // pt max for slimming
+//        slim_rap);  // max rapidity for slimming
+//
+//    Event_Generator(
+//        "10_90_B8_Train_Trees.root", // file name
+//        500000,     // number of events to generate
+//        beamPower,  // beam power
+//        8.,        // pt bias power (pt^x), set to -1. to disable bias
+//        10.,        // pt min for slimming
+//        90.,        // pt max for slimming
+//        slim_rap);  // max rapidity for slimming
+//
+//    Event_Generator(
+//        "40_60_B0_Test_Trees.root", // file name
+//        100000,     // number of events to generate
+//        beamPower,  // beam power
+//        -1,        // pt bias power (pt^x), set to -1. to disable bias
+//        40.,        // pt min for slimming
+//        60.,        // pt max for slimming
+//        slim_rap);  // max rapidity for slimming
+//
+//    Event_Generator(
+//        "40_60_B4_Test_Trees.root", // file name
+//        100000,     // number of events to generate
+//        beamPower,  // beam power
+//        4,        // pt bias power (pt^x), set to -1. to disable bias
+//        40.,        // pt min for slimming
+//        60.,        // pt max for slimming
+//        slim_rap);  // max rapidity for slimming
+//
+//    Event_Generator(
+//        "40_60_B8_Test_Trees.root", // file name
+//        100000,     // number of events to generate
+//        beamPower,  // beam power
+//        8,        // pt bias power (pt^x), set to -1. to disable bias
+//        40.,        // pt min for slimming
+//        60.,        // pt max for slimming
+//        slim_rap);  // max rapidity for slimming
     
     return 0;
 }
