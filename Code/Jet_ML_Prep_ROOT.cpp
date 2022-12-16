@@ -23,9 +23,18 @@ const bool debug = false;
 
 const int max_jets = 100;
 const int max_parts = 400;
+
+float fastjet_match_radius = 0.3        // Two jets are matched if they are within this radius squared.
+
 //const char* output_file_name = "Jet_ML_Prep.root";
 
-void Jet_ML_Prep(char* file_name, char* output_tree_description, float pt_min, float pt_max, int lowest_jet) {
+void Jet_ML_Prep(
+    char* file_name,
+    char* output_tree_description,
+    float pt_min,
+    float pt_max,
+    int lowest_jet
+    ) {
     
     char output_file_name[200];
     sprintf(output_file_name, "ML_Prep_%s.root", file_name);
