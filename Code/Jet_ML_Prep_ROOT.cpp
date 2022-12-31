@@ -9,8 +9,8 @@
 #include <filesystem>
 #include <algorithm>
 
-#include "_header.h"
-using namespace Project_Constants;
+#include "jet_ml_constants.h"
+using namespace Jet_ML_Constants;
 
 const int label_arr_size = 2;
 //char line2[100];
@@ -19,37 +19,95 @@ char* label_arr[label_arr_size] = {
     "FastJet, R = 0.4", "p_{T min, jet} > 5.0 GeV"};
 
 const bool printOut = true;
-const bool debug = false;
+const bool debug    = false;
 
 const int max_jets = 100;
 const int max_parts = 400;
 
-float fastjet_match_radius = 0.3        // Two jets are matched if they are within this radius squared.
-
 //const char* output_file_name = "Jet_ML_Prep.root";
 
-void Jet_ML_Prep(
-    char* file_name,
-    char* output_tree_description,
-    float pt_min,
-    float pt_max,
-    int lowest_jet
+bool Check_File_Compatibility(
+    char  file_path_A[500],
+    char  file_path_B[500],
     ) {
     
-    char output_file_name[200];
-    sprintf(output_file_name, "ML_Prep_%s.root", file_name);
+    bool files_ok = true;
     
-    char output_tree_name[200];
-    sprintf(output_tree_name, "Tree_%s", file_name);
+    TFile* file_A = new TFile(file_path_A, "READ");
+    TTree* tree_A;
+    if (file1->GetListOfKeys()->Contains("Generator_Parameters")) {
+        tree_A = (TTree*) file_A->Get("Generator_Parameters"); }
+    else if (file1->GetListOfKeys()->Contains("Pythia_Generator_Parameters")) {
+        tree_A = (TTree*) file_A->Get("Pythia_Generator_Parameters"); }
+    else if (file1->GetListOfKeys()->Contains("Thermal_Generator_Parameters")) {
+        tree_A = (TTree*) file_A->Get("Thermal_Generator_Parameters"); }
+    else files_ok = false;
+        
+    TFile* file_B = new TFile(file_path_B, "READ");
+    TTree* tree_B;
+    if (file1->GetListOfKeys()->Contains("Generator_Parameters")) {
+        tree_B = (TTree*) file_B->Get("Generator_Parameters"); }
+    else if (file1->GetListOfKeys()->Contains("Pythia_Generator_Parameters")) {
+        tree_B = (TTree*) file_B->Get("Pythia_Generator_Parameters"); }
+    else if (file1->GetListOfKeys()->Contains("Thermal_Generator_Parameters")) {
+        tree_B = (TTree*) file_B->Get("Thermal_Generator_Parameters"); }
+    else files_ok = false;
     
-    std::cout << "----- Preparing " << output_tree_name << " -----" << std::endl;
+    if (files_ok) {
+        int   a_event_count;
+        float a_pt_bias_power;
+        float a_jet_pt_min;
+        float a_jet_pt_max;
+        
+        tree_A->SetBranchAddress("event_count",       &a_event_count);
+        tree_A->SetBranchAddress("pt_bias_power",     &a_pt_bias_power);
+        tree_A->SetBranchAddress("jet_pt_min",        &a_jet_pt_min);
+        tree_A->SetBranchAddress("jet_pt_max",        &a_jet_pt_max);
+        
+        int   b_event_count;
+        float b_pt_bias_power;
+        float b_jet_pt_min;
+        float b_jet_pt_max;
+        
+        tree_B->SetBranchAddress("event_count",       &b_event_count);
+        tree_B->SetBranchAddress("pt_bias_power",     &b_pt_bias_power);
+        tree_B->SetBranchAddress("jet_pt_min",        &b_jet_pt_min);
+        tree_B->SetBranchAddress("jet_pt_max",        &b_jet_pt_max);
+        
+        tree_A->GetEntry(0);
+        tree_B->GetEntry(0);
+        
+        // Checks that files use the same generator data
+        if ((a_event_count   != b_event_count)   ||
+            (a_pt_bias_power != b_pt_bias_power) ||
+            (a_jet_pt_min    != b_jet_pt_min)    ||
+            (a_jet_pt_max    != b_jet_pt_max) ) {
+            files_ok = false;
+            std::cout << "Input files are incompatible! Generator data is not identical between files." << std::endl;
+            }
+        }
+        
+    return files_ok;
+    }
+
+void Jet_ML_Prep(
+    char  output_base_name[100],        // Base/stem of output file name (no file extensions or prefixes).
+    char  output_directory[400],        // Path to desired output directory.
+    char  comb_file_name[100],          // Full name of combined output file
+    char  pyth_file_name[100],          // Full name of combined output file
+    float jet_pt_min = NULL,
+    float jet_pt_max = NULL,
+    int   lowest_jet = 0,               // Only accepts the top [lowest_jet] jets. If lowest_jet = 0, accepts all jets
+    float fastjet_match_radius = 0.3    // Two jets are matched if they are within this radius squared.
+    ) {
     
     // Combined file of jets from thermal and PYTHIA data
     char combined_file_path[200];
-    sprintf(combined_file_path, "%s/Comb_%s_Trees.root", dir_data, file_name);
+    sprintf(combined_file_path, "%s/Comb_%s.root", dir_data, file_name);
     TFile* combined_file = new TFile(combined_file_path, "READ");
     
     TTree* combJet_tree = (TTree*) combined_file->Get("FastJet_Tree");
+    TTree* pyth_param_tree = (TTree*) combined_file->Get("Pyth_Generator_Parameters");
     
     std::cout << "Reading combined file." << std::endl;
     
@@ -119,20 +177,47 @@ void Jet_ML_Prep(
     pythJet_tree->SetBranchAddress("jet_const_phi", p_jet_const_phi);
     pythJet_tree->SetBranchAddress("jet_const_E",   p_jet_const_E);
     
+    if ( !Check_File_Compatibility(combined_file_path, pythia_file_path) ) break;
+    
     // Sets output file and plot directory
     char output_file_path[200];
     sprintf(output_file_path, "%s/%s", dir_data, output_file_name);
     TFile* output_file = new TFile(output_file_path, "UPDATE");
+    
+    TTree* pyth_param_tree_copy = pyth_param_tree->CopyTree("Pyth_Generator_Parameters");
+    pyth_param_tree_copy->Write("", TObject::kOverwrite);
+    
+    int   p_gen_event_count;
+    float p_gen_pt_bias_power;
+    float p_gen_jet_pt_min;
+    float p_gen_jet_pt_max;
+    
+    pyth_param_tree->SetBranchAddress("event_count",       &p_gen_event_count);
+    pyth_param_tree->SetBranchAddress("pt_bias_power",     &p_gen_pt_bias_power);
+    pyth_param_tree->SetBranchAddress("jet_pt_min",        &p_gen_jet_pt_min);
+    pyth_param_tree->SetBranchAddress("jet_pt_max",        &p_gen_jet_pt_max);
+    
+    pyth_param_tree->GetEntry(0);
+    
+    char output_file_path[200];
+    sprintf(output_file_path, "%s/ML_Prep_%s_B%.0f_%.0f_%.0f_N%i.root", output_directory, output_base_name, gen_pt_bias_power, gen_jet_pt_min, gen_jet_pt_max, gen_event_count);
+    
+    char output_tree_name[200];
+    sprintf(output_tree_name, "Jet_ML_Tree", output_base_name);
+    char output_tree_description[200];
+    sprintf(output_tree_description, "Generated from bias of ", output_base_name);
     TTree* output_tree = new TTree(output_tree_name, output_tree_description);
     
-    char subdir_plots[200];
-    sprintf(subdir_plots, "%s/MachineLearning", dir_plots);
+    std::cout << "----- Preparing " << output_tree_name << " -----" << std::endl;
+    
+    char plot_directory[200];
+    sprintf(plot_directory, "%s/MachineLearning", output_directory);
     std::__fs::filesystem::create_directories(subdir_plots);
     
     // Plotted Data Output Tree
     // NOTE: This assumes jets have already been sorted from highest E to lowest E by FastJet!
     
-    int nEvent = pythJet_tree->GetEntries();
+    int    nEvent = pythJet_tree->GetEntries();
     
     float  background_pt_median[nEvent];
     float  thermal_E_median[nEvent];

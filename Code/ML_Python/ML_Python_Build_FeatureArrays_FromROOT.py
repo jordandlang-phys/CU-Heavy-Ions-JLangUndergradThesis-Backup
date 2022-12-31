@@ -117,7 +117,7 @@ def Build_FeatureArrays_FromROOT(
         jet_phi         = input_tree.jet_phi
         jet_rho         = input_tree.jet_rho
 
-        jet_pt_true     = input_tree.jet_pt_true_pythia
+        jet_pt_true     = input_tree.jet_pt_true
 
         temp_jet_arr = [
                 jet_pt_raw,      jet_pt_corr,     jet_mass,        jet_area, 

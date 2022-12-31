@@ -15,34 +15,23 @@ using namespace Pythia8;
 #include <iostream>
 #include <filesystem>
 
+#include "jet_ml_constants.h"
+using namespace Jet_ML_Constants;
+
 const bool print_out        = true;
-const int  print_every_x    = 1000;
 const bool debug            = false;
-
-// Math Default Values
-const double math_pi        = 3.14159265359;
-const double math_e         = 2.71828182846;
-
-// PYTHIA Default Values
-const float  beam_power     = 2760.;        // [GeV] Simulated beam power in the dector. Default is 2.76 TeV for ALICE.
-const float  detector_eta   = 0.9;    // Maximum rapidity of the detector. Default is 0.9 for ALICE.
-const bool   use_voronoi    = false;       // Uses Voronoi for jet clustering
-
-// Thermal Default Values
-const int    gaus_mean      = 1800;
-const int    gaus_sigma     = 200;
-const double gaus_norm      = 1 / sqrt(2 * math_pi * pow(gaus_sigma,2));
-const double m_pion         = 0.1396;           // Pion+/- mass in GeV
+const int  print_every_x    = 1000;
 
 
 
 // ----- PYTHIA GENERATOR -----
 
 
+
 // Add input for file name base/root, file path, etc.
 // Make sure that nothing in functions relies on the header file!
 // Remove jet energy (we don't use it anywhere)
-void Pythia_Generator(
+char* Pythia_Generator(
     char  output_base_name[100],            // Base/stem of output file name (no file extensions or prefixes).
     char  output_directory[400],            // Path to desired output directory.
     int   event_count,                      // Number of collision events to generate. The number of jets will be greater than this.
@@ -53,16 +42,61 @@ void Pythia_Generator(
     float pt_hat_min = 7.5,                 // [GeV] ptHatMin value.
     float pt_hat_max = 0.,                  // [GeV] ptHatMax value. If 0. then no upper limit.
     float fastjet_radius = 0.4,             // Jet radius used by FastJet.
-    float fastjet_pt_min = 5.0              // [GeV] Minimum pT considered by FastJet for a
+    float fastjet_pt_min = 5.0,             // [GeV] Minimum pT considered by FastJet for a
+    float  beam_power     = 2760.,          // [GeV] Simulated beam power in the dector. Default is 2.76 TeV for ALICE.
+    float  detector_eta   = 0.9             // Maximum rapidity of the detector. Default is 0.9 for ALICE.
     ) {
     
     char output_file_path[500];
     sprintf(output_file_path, "%s/Pyth_%s_B%.0f_%.0f_%.0f_N%i.root", output_directory, output_base_name, pt_bias_power, jet_pt_min, jet_pt_max, event_count);
-    TFile* output_file = new TFile(output_file_path, "UPDATE");
-    TTree* pythia_tree = new TTree("Pythia_Tree","Tree of particle jet events from PYTHIA p+p collisions");
-    TTree* jet_tree    = new TTree("FastJet_Tree","Tree of jet clusters by event from PYTHIA");
+    TFile* output_file      = new TFile(output_file_path, "UPDATE");
+    TTree* pythia_tree      = new TTree("Pythia_Tree","Tree of particle jet events from PYTHIA p+p collisions");
+    TTree* jet_tree         = new TTree("FastJet_Tree","Tree of jet clusters by event from PYTHIA");
     
     if (print_out) std::cout << "Output file and trees successfully generated." << std::endl;
+    
+    // Generator Parameter Tree
+    // This TTree stores the parameters used for generation in the file to preserve this data for reference
+    TTree* gen_param_tree   = new TTree("Generator_Parameters", "Flat tree of parameters used for file generation");
+    
+    int   gen_event_count;
+    float gen_pt_bias_power;
+    float gen_jet_pt_min;
+    float gen_jet_pt_max;
+    float gen_jet_eta_max;
+    float gen_pt_hat_min;
+    float gen_pt_hat_max;
+    float gen_fastjet_radius;
+    float gen_fastjet_pt_min;
+    float gen_beam_power;
+    float gen_detector_eta;
+    
+    gen_param_tree->Branch("event_count",       &gen_event_count);
+    gen_param_tree->Branch("pt_bias_power",     &gen_pt_bias_power);
+    gen_param_tree->Branch("jet_pt_min",        &gen_jet_pt_min);
+    gen_param_tree->Branch("jet_pt_max",        &gen_jet_pt_max);
+    gen_param_tree->Branch("jet_eta_max",       &gen_jet_eta_max);
+    gen_param_tree->Branch("pt_hat_min",        &gen_pt_hat_min);
+    gen_param_tree->Branch("pt_hat_max",        &gen_pt_hat_max);
+    gen_param_tree->Branch("fastjet_radius",    &gen_fastjet_radius);
+    gen_param_tree->Branch("fastjet_pt_min",    &gen_fastjet_pt_min);
+    gen_param_tree->Branch("beam_power",        &gen_beam_power);
+    gen_param_tree->Branch("detector_eta",      &gen_detector_eta);
+    
+    gen_event_count     = event_count;
+    gen_pt_bias_power   = pt_bias_power;
+    gen_jet_pt_min      = jet_pt_min;
+    gen_jet_pt_max      = jet_pt_max;
+    gen_jet_eta_max     = jet_eta_max;
+    gen_pt_hat_min      = pt_hat_min;
+    gen_pt_hat_max      = pt_hat_max;
+    gen_fastjet_radius  = fastjet_radius;
+    gen_fastjet_pt_min  = fastjet_pt_min;
+    gen_beam_power      = beam_power;
+    gen_detector_eta    = detector_eta;
+    
+    gen_param_tree->Fill();
+    gen_param_tree->Write("", TObject::kOverwrite);
     
     // Output Variables
     
@@ -86,7 +120,6 @@ void Pythia_Generator(
     float   jet_const_pt[100][400];
     float   jet_const_eta[100][400];
     float   jet_const_phi[100][400];
-    float   jet_const_E[100][400];
     
     // Builds particle and jet branches
     // Note: Can only do variable size for first variable in array
@@ -108,7 +141,6 @@ void Pythia_Generator(
     jet_tree->Branch("jet_const_pt",    jet_const_pt,   "jet_const_pt[jet_n][400]/F");
     jet_tree->Branch("jet_const_eta",   jet_const_eta,  "jet_const_eta[jet_n][400]/F");
     jet_tree->Branch("jet_const_phi",   jet_const_phi,  "jet_const_phi[jet_n][400]/F");
-    jet_tree->Branch("jet_const_E",     jet_const_E,    "jet_const_E[jet_n][400]/F");
     
     // --- PYTHIA Setup ---
     // --- LHC process and output selection. Initialization.
@@ -118,7 +150,7 @@ void Pythia_Generator(
     pythia_settings.parm("PhaseSpace:pTHatMin", pt_hat_min);
     pythia_settings.parm("PhaseSpace:pTHatMax", pt_hat_max);
     pythia.readString("HardQCD:all = on");  // Turns on hard scattering
-    if ( pt_bias_power >= 0. ) {
+    if ( pt_bias_power > 0. ) {
         pythia_settings.parm("PhaseSpace:bias2SelectionPow", pt_bias_power);
         pythia.readString("PhaseSpace:bias2Selection = on");
         pythia.readString("PhaseSpace:bias2SelectionRef = 100.");
@@ -246,6 +278,8 @@ void Pythia_Generator(
     output_file->Close();
     
     std::cout << "Files saved and closed." << std::endl;
+    
+    return output_file_path;
 }
 
 
@@ -306,22 +340,63 @@ double GenPhi() {
     return phi;
 }
 
-void Thermal_Generator(
+char* Thermal_Generator(
     char  output_base_name[100],            // Base/stem of output file name (no file extensions or prefixes).
     char  output_directory[400],            // Path to desired output directory.
     int   event_count,                      // Number of collision events to generate. The number of jets will be greater than this.
     float pt_bias_power,                    // Bias applied to the particle pT distribution.
     float jet_pt_min = 10.,                 // Minimum jet pT to accept. At least 1 jet per event will be greater than this.
-    float jet_pt_max = 0.                   // Maximum jet pT to accept. At least 1 jet per event will be less than this.
+    float jet_pt_max = 90.,                 // Maximum jet pT to accept. At least 1 jet per event will be less than this.
+    float  beam_power = 2760.,              // [GeV] Simulated beam power in the dector. Default is 2.76 TeV for ALICE.
+    float  detector_eta = 0.9               // Maximum rapidity of the detector. Default is 0.9 for ALICE.
     ) {
     
-    char file_path[500];
-    sprintf(file_path, "%s/Ther_%s_B%.0f_%.0f_%.0f_N%i.root", output_directory, output_base_name, pt_bias_power, jet_pt_min, jet_pt_max, event_count);
-    TFile* output_file = new TFile(file_path, "UPDATE");
+    char output_file_path[500];
+    sprintf(output_file_path, "%s/Ther_%s_B%.0f_%.0f_%.0f_N%i.root", output_directory, output_base_name, pt_bias_power, jet_pt_min, jet_pt_max, event_count);
+    TFile* output_file = new TFile(output_file_path, "UPDATE");
     
     if (print_out) std::cout << "File Created: " << output_file << std::endl;
     TTree* output_tree = new TTree("Thermal_Tree","Tree of thermal particles as background for events");
     if (print_out) std::cout << "TTree Created: Thermal_Tree" << std::endl;
+    
+    // Generator Parameter Tree
+    // This TTree stores the parameters used for generation in the file to preserve this data for reference
+    TTree* gen_param_tree   = new TTree("Generator_Parameters","Flat tree of parameters used for file generation");
+    
+    int   gen_event_count;
+    float gen_pt_bias_power;
+    float gen_jet_pt_min;
+    float gen_jet_pt_max;
+    int   gen_gaus_mean;
+    int   gen_gaus_sigma;
+    float gen_gaus_norm;
+    float gen_beam_power;
+    float gen_detector_eta;
+    
+    gen_param_tree->Branch("event_count",       &gen_event_count);
+    gen_param_tree->Branch("pt_bias_power",     &gen_pt_bias_power);
+    gen_param_tree->Branch("jet_pt_min",        &gen_jet_pt_min);
+    gen_param_tree->Branch("jet_pt_max",        &gen_jet_pt_max);
+    gen_param_tree->Branch("gaus_mean",         &gen_gaus_mean);
+    gen_param_tree->Branch("gaus_sigma",        &gen_gaus_sigma);
+    gen_param_tree->Branch("gaus_norm",         &gen_gaus_norm);
+    gen_param_tree->Branch("beam_power",        &gen_beam_power);
+    gen_param_tree->Branch("detector_eta",      &gen_detector_eta);
+    
+    gen_event_count     = event_count;
+    gen_pt_bias_power   = pt_bias_power;
+    gen_jet_pt_min      = jet_pt_min;
+    gen_jet_pt_max      = jet_pt_max;
+    gen_gaus_mean       = gaus_mean;
+    gen_gaus_sigma      = gaus_sigma;
+    gen_gaus_norm       = gaus_norm;
+    gen_beam_power      = beam_power;
+    gen_detector_eta    = detector_eta;
+    
+    gen_param_tree->Fill();
+    gen_param_tree->Write("", TObject::kOverwrite);
+    
+    // Output Variables
     
     thermal_n_func   = new TF1("thermal_n_func",   Gaussian_Func, 0, 2 * gaus_mean, 3);
     thermal_pt_func  = new TF1("thermal_pt_func",  ModifiedHagedorn_Func, 0, 100, 4);
@@ -386,6 +461,8 @@ void Thermal_Generator(
     output_file->Close();
     
     if ( print_out ) std::cout << "File written to and closed." << std::endl;
+    
+    return output_file_path;
 }
 
 
@@ -394,22 +471,21 @@ void Thermal_Generator(
 
 
 
-void Combine_Events(
+char* Combine_Events(
     char  output_base_name[100],            // Base/stem of output file name (no file extensions or prefixes).
     char  output_directory[400],            // Path to desired output directory.
-    int   event_count,                      // Number of collision events to generate. The number of jets will be greater than this.
-    float pt_bias_power,                    // Bias applied to the particle pT distribution.
-    float jet_pt_min = 10.,                 // Minimum jet pT to accept. At least 1 jet per event will be greater than this.
-    float jet_pt_max = 0.                   // Maximum jet pT to accept. At least 1 jet per event will be less than this.
+    char  pythia_file_path[500],
+    char  thermal_file_path[500],
+    float  beam_power = 2760.,              // [GeV] Simulated beam power in the dector. Default is 2.76 TeV for ALICE.
+    float  detector_eta = 0.9               // Maximum rapidity of the detector. Default is 0.9 for ALICE.
     ) {
     
     // Open PYTHIA events data and access thermal TTree
-    char pythia_file_path[500];
-    sprintf(pythia_file_path, "%s/Pyth_%s_B%.0f_%.0f_%.0f_N%i.root", output_directory, output_base_name, pt_bias_power, jet_pt_min, jet_pt_max, event_count);
     TFile* pythia_file = new TFile(pythia_file_path, "READ");
     std::cout << "Reading PYTHIA File" << std::endl;
     
     TTree* pythia_tree = (TTree*) pythia_file->Get("Pythia_Tree");
+    TTree* pythia_param_tree = (TTree*) pythia_file->Get("Generator_Parameters");
     
     int   pythia_n;
     float pythia_pt[200];
@@ -421,15 +497,37 @@ void Combine_Events(
     pythia_tree->SetBranchAddress("particle_eta", pythia_eta);
     pythia_tree->SetBranchAddress("particle_phi", pythia_phi);
     
+    int   p_gen_event_count;
+    float p_gen_pt_bias_power;
+    float p_gen_jet_pt_min;
+    float p_gen_jet_pt_max;
+    float p_gen_jet_eta_max;
+    float p_gen_pt_hat_min;
+    float p_gen_pt_hat_max;
+    float p_gen_fastjet_radius;
+    float p_gen_fastjet_pt_min;
+    float p_gen_beam_power;
+    float p_gen_detector_eta;
+    
+    pythia_param_tree->SetBranchAddress("event_count",      &p_gen_event_count);
+    pythia_param_tree->SetBranchAddress("pt_bias_power",    &p_gen_pt_bias_power);
+    pythia_param_tree->SetBranchAddress("jet_pt_min",       &p_gen_jet_pt_min);
+    pythia_param_tree->SetBranchAddress("jet_pt_max",       &p_gen_jet_pt_max);
+    pythia_param_tree->SetBranchAddress("jet_eta_max",      &p_gen_jet_eta_max);
+    pythia_param_tree->SetBranchAddress("pt_hat_min",       &p_gen_pt_hat_min);
+    pythia_param_tree->SetBranchAddress("pt_hat_max",       &p_gen_pt_hat_max);
+    pythia_param_tree->SetBranchAddress("fastjet_radius",   &p_gen_fastjet_radius);
+    pythia_param_tree->SetBranchAddress("fastjet_pt_min",   &p_gen_fastjet_pt_min);
+    pythia_param_tree->SetBranchAddress("beam_power",       &p_gen_beam_power);
+    pythia_param_tree->SetBranchAddress("detector_eta",     &p_gen_detector_eta);
+    
     if (print_out) std::cout << "TTree Accessed: Pythia_Tree" << std::endl;
     
     // Open thermal events data and access thermal TTree
-    char thermal_file_path[500];
-    sprintf(thermal_file_path, "%s/Ther_%s_B%.0f_%.0f_%.0f_N%i.root", output_directory, output_base_name, pt_bias_power, jet_pt_min, jet_pt_max, event_count);
     TFile* thermal_file = new TFile(thermal_file_path, "READ");
     std::cout << "Reading Thermal File" << std::endl;
-    
     TTree* thermal_tree = (TTree*) thermal_file->Get("Thermal_Tree");
+    TTree* thermal_param_tree = (TTree*) thermal_file->Get("Generator_Parameters");
     
     int   thermal_n;
     float thermal_pt[4000];
@@ -441,16 +539,78 @@ void Combine_Events(
     thermal_tree->SetBranchAddress("particle_eta", thermal_eta);
     thermal_tree->SetBranchAddress("particle_phi", thermal_phi);
     
+    int   t_gen_gaus_mean;
+    float t_gen_gaus_sigma;
+    float t_gen_gaus_norm;
+    
+    thermal_param_tree->SetBranchAddress("gaus_mean",       &t_gen_gaus_mean);
+    thermal_param_tree->SetBranchAddress("gaus_sigma",      &t_gen_gaus_sigma);
+    thermal_param_tree->SetBranchAddress("gaus_norm",       &t_gen_gaus_norm);
+    
     if (print_out) std::cout << "TTree Accessed: Thermal_Tree" << std::endl;
     
     // Create new combined events data file
     char combined_file_path[500];
-    sprintf(combined_file_path, "%s/Comb_%s_B%.0f_%.0f_%.0f_N%i.root", output_directory, output_base_name, pt_bias_power, jet_pt_min, jet_pt_max, event_count);
-    TFile *combined_file = new TFile(combined_file_path, "UPDATE");
+    pythia_param_tree->GetEntry(0);
+    sprintf(combined_file_path, "%s/Comb_%s_B%.0f_%.0f_%.0f_N%i.root", output_directory, output_base_name, p_gen_pt_bias_power, p_gen_jet_pt_min, p_gen_jet_pt_max, p_gen_event_count);
+    TFile* combined_file = new TFile(combined_file_path, "UPDATE");
     std::cout << "Combined File Created" << std::endl;
     
     // Create new combined events TTree
-    TTree *combined_tree = new TTree("Combined_Tree","Tree containing jet and thermal background particles.");
+    TTree* combined_tree = new TTree("Combined_Tree","Tree containing jet and thermal background particles.");
+    TTree* combined_param_tree = new TTree("Generator_Parameters", "Flat tree of parameters (PYTHIA and Thermal) used for event generation");
+    
+    // Creates flat TTree of generator parameters
+    int   gen_event_count;
+    float gen_pt_bias_power;
+    float gen_jet_pt_min;
+    float gen_jet_pt_max;
+    float gen_jet_eta_max;
+    float gen_pt_hat_min;
+    float gen_pt_hat_max;
+    float gen_fastjet_radius;
+    float gen_fastjet_pt_min;
+    float gen_beam_power;
+    float gen_detector_eta;
+    int   gen_gaus_mean;
+    float gen_gaus_sigma;
+    float gen_gaus_norm;
+    
+    combined_param_tree->Branch("event_count",       &gen_event_count);
+    combined_param_tree->Branch("pt_bias_power",     &gen_pt_bias_power);
+    combined_param_tree->Branch("jet_pt_min",        &gen_jet_pt_min);
+    combined_param_tree->Branch("jet_pt_max",        &gen_jet_pt_max);
+    combined_param_tree->Branch("jet_eta_max",       &gen_jet_eta_max);
+    combined_param_tree->Branch("pt_hat_min",        &gen_pt_hat_min);
+    combined_param_tree->Branch("pt_hat_max",        &gen_pt_hat_max);
+    combined_param_tree->Branch("fastjet_radius",    &gen_fastjet_radius);
+    combined_param_tree->Branch("fastjet_pt_min",    &gen_fastjet_pt_min);
+    combined_param_tree->Branch("beam_power",        &gen_beam_power);
+    combined_param_tree->Branch("detector_eta",      &gen_detector_eta);
+    combined_param_tree->Branch("gaus_mean",         &gen_gaus_mean);
+    combined_param_tree->Branch("gaus_sigma",        &gen_gaus_sigma);
+    combined_param_tree->Branch("gaus_norm",         &gen_gaus_norm);
+    
+    pythia_param_tree->GetEntry(0);
+    thermal_param_tree->GetEntry(0);
+    
+    gen_event_count     = p_gen_event_count;
+    gen_pt_bias_power   = p_gen_pt_bias_power;
+    gen_jet_pt_min      = p_gen_jet_pt_min;
+    gen_jet_pt_max      = p_gen_jet_pt_max;
+    gen_jet_eta_max     = p_gen_jet_eta_max;
+    gen_pt_hat_min      = p_gen_pt_hat_min;
+    gen_pt_hat_max      = p_gen_pt_hat_max;
+    gen_fastjet_radius  = p_gen_fastjet_radius;
+    gen_fastjet_pt_min  = p_gen_fastjet_pt_min;
+    gen_gaus_mean       = t_gen_gaus_mean;
+    gen_gaus_sigma      = t_gen_gaus_sigma;
+    gen_gaus_norm       = t_gen_gaus_norm;
+    gen_beam_power      = p_gen_beam_power;
+    gen_detector_eta    = p_gen_detector_eta;
+    
+    combined_param_tree->Fill();
+    combined_param_tree->Write("", TObject::kOverwrite);
     
     if (print_out) std::cout << "TTree Created: Combined_Tree" << std::endl;
     
@@ -489,6 +649,7 @@ void Combine_Events(
             combined_eta[p] = pythia_eta[p];
             combined_phi[p] = pythia_phi[p];
             combined_jet_class = 1;
+//            if ( print_out && (e % print_every_x) == 0 ) std::cout << "source / pT / eta / phi: " << combined_jet_class << combined_pt[p] << combined_eta[p] << combined_phi[p] << std::endl;
         }
         
         // Loop to add thermal particles
@@ -498,6 +659,7 @@ void Combine_Events(
             combined_eta[pythia_count + t - 1] = thermal_eta[t];
             combined_phi[pythia_count + t - 1] = thermal_phi[t];
             combined_jet_class = 0;
+//            if ( print_out && (e % print_every_x) == 0 ) std::cout << "source / pT / eta / phi: " << combined_jet_class << combined_pt[t] << combined_eta[t] << combined_phi[t] << std::endl;
         }
         
         if ( print_out && (e % print_every_x) == 0 ) std::cout << "Event #" << e << " has " << combined_n << " total particles." << std::endl;
@@ -518,6 +680,8 @@ void Combine_Events(
     thermal_file    ->Close();
     
     if ( print_out ) std::cout << "File written to and closed." << std::endl;
+    
+    return combined_file_path;
 }
 
 
@@ -527,18 +691,45 @@ void Combine_Events(
 
 
 void Jet_Clusterer(
-    char  output_base_name[100],            // Base/stem of output file name (no file extensions or prefixes).
-    char  output_directory[400],            // Path to desired output directory.
-    int   event_count,                      // Number of collision events to generate. The number of jets will be greater than this.
-    float pt_bias_power,                    // Bias applied to the particle pT distribution.
-    float jet_pt_min = 10.,                 // Minimum jet pT to accept. At least 1 jet per event will be greater than this.
-    float jet_pt_max = 0.,                  // Maximum jet pT to accept. At least 1 jet per event will be less than this.
-    float fastjet_radius = 0.4,             // Jet radius used by FastJet.
-    float fastjet_pt_min = 5.0              // [GeV] Minimum pT considered by FastJet for a
+    char  combined_file_path[500],
+    float  beam_power = 2760.,              // [GeV] Simulated beam power in the dector. Default is 2.76 TeV for ALICE.
+    float  detector_eta = 0.9               // Maximum rapidity of the detector. Default is 0.9 for ALICE.
     ) {
+    // Input Variables and Trees
+    TFile* input_file = new TFile(combined_file_path, "UPDATE");
+    TTree* input_tree = (TTree*) input_file->Get("Combined_Tree");
+    
+    int   input_ntotal = 0;
+    int   input_n;
+    float input_pt[4200];
+    float input_eta[4200];
+    float input_phi[4200];
+    TLorentzVector input_vector;
+
+    input_tree->SetBranchAddress("particle_n",      &input_n);
+    input_tree->SetBranchAddress("particle_pt",     input_pt);
+    input_tree->SetBranchAddress("particle_eta",    input_eta);
+    input_tree->SetBranchAddress("particle_phi",    input_phi);
+    
+    TTree* input_param_tree = (TTree*) input_file->Get("Generator_Parameters");
+    
+    float gen_fastjet_radius;
+    float gen_fastjet_pt_min;
+    
+    input_param_tree->SetBranchAddress("fastjet_radius",   &gen_fastjet_radius);
+    input_param_tree->SetBranchAddress("fastjet_pt_min",   &gen_fastjet_pt_min);
+    
+    input_param_tree->GetEntry(0);
+    
+    float fastjet_radius = gen_fastjet_radius;
+    float fastjet_pt_min = gen_fastjet_pt_min;
+    
+    std::cout << fastjet_radius << ", " << fastjet_pt_min << std::endl;
+    
+    if (print_out) std::cout << "Input file and tree successfully accessed." << std::endl;
     
     // Defines the jet definition and jet area definition
-    fastjet::JetDefinition jet_definition(fastjet::antikt_algorithm, fastjet_pt_min);
+    fastjet::JetDefinition jet_definition(fastjet::antikt_algorithm, gen_fastjet_radius);
     fastjet::AreaDefinition area_definition;
     
     bool use_voronoi = false;
@@ -547,7 +738,7 @@ void Jet_Clusterer(
         double ghost_area    = 0.05;
         int    active_area_repeats = 5;
         fastjet::GhostedAreaSpec ghost_spec(ghost_etamax, active_area_repeats, ghost_area);
-        area_definition = fastjet::AreaDefinition(fastjet::active_area,ghost_spec);
+        area_definition = fastjet::AreaDefinition(fastjet::active_area, ghost_spec);
     } else {
         double effective_Rfact = 1.0;
         area_definition = fastjet::VoronoiAreaSpec(effective_Rfact);
@@ -555,26 +746,8 @@ void Jet_Clusterer(
     
     if ( print_out ) std::cout << "FastJet settings initialized." << std::endl;
         
-    // Input Variables and Trees
-    int   input_ntotal = 0;
-    int   input_n;
-    float input_pt[4200];
-    float input_eta[4200];
-    float input_phi[4200];
-    TLorentzVector input_vec;
-
-    char input_file_path[500];
-    sprintf(input_file_path, "%s/Comb_%s_B%.0f_%.0f_%.0f_N%i.root", output_directory, output_base_name, pt_bias_power, jet_pt_min, jet_pt_max, event_count);
-    TFile* input_file = new TFile(input_file_path, "UPDATE");
-    TTree* input_tree = (TTree*) input_file->Get("Combined_Tree");
+    // Sets jet data to process
     TTree* output_tree = new TTree("FastJet_Tree","Tree of jet clusters");
-
-    input_tree->SetBranchAddress("particle_n", &input_n);
-    input_tree->SetBranchAddress("particle_pt", input_pt);
-    input_tree->SetBranchAddress("particle_eta", input_eta);
-    input_tree->SetBranchAddress("particle_phi", input_phi);
-    
-    if (print_out) std::cout << "Input file and tree successfully accessed." << std::endl;
     
     int     jet_n;
     float   jet_pt[100];
@@ -587,21 +760,19 @@ void Jet_Clusterer(
     float   jet_const_pt[100][400];
     float   jet_const_eta[100][400];
     float   jet_const_phi[100][400];
-    float   jet_const_E[100][400];
     
     // Note: Can only do variable size for first variable in array
     output_tree->Branch("jet_n",            &jet_n);
-    output_tree->Branch("jet_pt",           jet_pt,       "jet_pt[jet_n]/F");
-    output_tree->Branch("jet_y",            jet_y,        "jet_y[jet_n]/F");
-    output_tree->Branch("jet_phi",          jet_phi,      "jet_phi[jet_n]/F");
-    output_tree->Branch("jet_mass",         jet_mass,     "jet_mass[jet_n]/F");
-    output_tree->Branch("jet_area",         jet_area,     "jet_area[jet_n]/F");
-    output_tree->Branch("jet_area_err",     jet_area_err, "jet_area_err[jet_n]/F");
+    output_tree->Branch("jet_pt",           jet_pt,         "jet_pt[jet_n]/F");
+    output_tree->Branch("jet_y",            jet_y,          "jet_y[jet_n]/F");
+    output_tree->Branch("jet_phi",          jet_phi,        "jet_phi[jet_n]/F");
+    output_tree->Branch("jet_mass",         jet_mass,       "jet_mass[jet_n]/F");
+    output_tree->Branch("jet_area",         jet_area,       "jet_area[jet_n]/F");
+    output_tree->Branch("jet_area_err",     jet_area_err,   "jet_area_err[jet_n]/F");
     output_tree->Branch("jet_const_n",      jet_const_n,    "jet_const_n[jet_n]/I");
     output_tree->Branch("jet_const_pt",     jet_const_pt,   "jet_const_pt[jet_n][400]/F");
     output_tree->Branch("jet_const_eta",    jet_const_eta,  "jet_const_eta[jet_n][400]/F");
     output_tree->Branch("jet_const_phi",    jet_const_phi,  "jet_const_phi[jet_n][400]/F");
-    output_tree->Branch("jet_const_E",      jet_const_E,    "jet_const_E[jet_n][400]/F");
     
     if ( print_out ) std::cout << "Output tree variables initialized." << std::endl;
     
@@ -614,8 +785,8 @@ void Jet_Clusterer(
         std::vector<fastjet::PseudoJet> input_particles;
         
         for ( int p = 0 ; p < input_n ; p++) {
-            input_vec.SetPtEtaPhiM(input_pt[p], input_eta[p], input_phi[p], m_pion);
-            input_particles.push_back(fastjet::PseudoJet( input_vec.Px(), input_vec.Py(), input_vec.Pz(), input_vec.E() ));
+            input_vector.SetPtEtaPhiM(input_pt[p], input_eta[p], input_phi[p], m_pion);
+            input_particles.push_back(fastjet::PseudoJet( input_vector.Px(), input_vector.Py(), input_vector.Pz(), input_vector.E() ));
         }
         
         fastjet::ClusterSequenceArea jet_clusters(input_particles, jet_definition, area_definition);
@@ -642,7 +813,6 @@ void Jet_Clusterer(
                 jet_const_pt[j][p]   = jet_constituents[p].pt();
                 jet_const_eta[j][p]  = jet_constituents[p].eta();
                 jet_const_phi[j][p]  = jet_constituents[p].phi();
-                jet_const_E[j][p]    = jet_constituents[p].E();
             }
         }
         
@@ -670,6 +840,446 @@ void Jet_Clusterer(
 
 
 
+// ----- MACHINE LEARNIGN FILE PREP ----
+
+
+
+bool Check_File_Compatibility(
+    char  file_path_A[500],
+    char  file_path_B[500]
+    ) {
+    
+    bool files_ok = true;
+    
+    TFile* file_A = new TFile(file_path_A, "READ");
+    TTree* tree_A;
+    if (file_A->GetListOfKeys()->Contains("Generator_Parameters")) {
+        tree_A = (TTree*) file_A->Get("Generator_Parameters"); }
+    else if (file_A->GetListOfKeys()->Contains("Pythia_Generator_Parameters")) {
+        tree_A = (TTree*) file_A->Get("Pythia_Generator_Parameters"); }
+    else if (file_A->GetListOfKeys()->Contains("Thermal_Generator_Parameters")) {
+        tree_A = (TTree*) file_A->Get("Thermal_Generator_Parameters"); }
+    else files_ok = false;
+        
+    TFile* file_B = new TFile(file_path_B, "READ");
+    TTree* tree_B;
+    if (file_B->GetListOfKeys()->Contains("Generator_Parameters")) {
+        tree_B = (TTree*) file_B->Get("Generator_Parameters"); }
+    else if (file_B->GetListOfKeys()->Contains("Pythia_Generator_Parameters")) {
+        tree_B = (TTree*) file_B->Get("Pythia_Generator_Parameters"); }
+    else if (file_B->GetListOfKeys()->Contains("Thermal_Generator_Parameters")) {
+        tree_B = (TTree*) file_B->Get("Thermal_Generator_Parameters"); }
+    else files_ok = false;
+    
+    if (files_ok) {
+        int   a_event_count;
+        float a_pt_bias_power;
+        float a_jet_pt_min;
+        float a_jet_pt_max;
+        
+        tree_A->SetBranchAddress("event_count",       &a_event_count);
+        tree_A->SetBranchAddress("pt_bias_power",     &a_pt_bias_power);
+        tree_A->SetBranchAddress("jet_pt_min",        &a_jet_pt_min);
+        tree_A->SetBranchAddress("jet_pt_max",        &a_jet_pt_max);
+        
+        int   b_event_count;
+        float b_pt_bias_power;
+        float b_jet_pt_min;
+        float b_jet_pt_max;
+        
+        tree_B->SetBranchAddress("event_count",       &b_event_count);
+        tree_B->SetBranchAddress("pt_bias_power",     &b_pt_bias_power);
+        tree_B->SetBranchAddress("jet_pt_min",        &b_jet_pt_min);
+        tree_B->SetBranchAddress("jet_pt_max",        &b_jet_pt_max);
+        
+        tree_A->GetEntry(0);
+        tree_B->GetEntry(0);
+        
+        // Checks that files use the same generator data
+        if ((a_event_count   != b_event_count)   ||
+            (a_pt_bias_power != b_pt_bias_power) ||
+            (a_jet_pt_min    != b_jet_pt_min)    ||
+            (a_jet_pt_max    != b_jet_pt_max) ) {
+            files_ok = false;
+            std::cout << "Input files are incompatible! Generator data is not identical between files." << std::endl;
+            }
+        }
+        
+    return files_ok;
+    }
+    
+void Jet_ML_Prep(
+    char  output_base_name[100],        // Base/stem of output file name (no file extensions or prefixes).
+    char  output_directory[400],        // Path to desired output directory.
+    char  combined_file_path[500],      // Full name of combined output file
+    char  pythia_file_path[500],        // Full name of combined output file
+    float jet_pt_min = -1.,             //
+    float jet_pt_max = -1.,             //
+    int   lowest_jet = 0,               // Only accepts the top [lowest_jet] jets. If lowest_jet = 0, accepts all jets
+    float fastjet_match_radius = 0.3   // Two jets are matched if they are within this radius squared.
+    ) {
+    
+    if ( !Check_File_Compatibility(combined_file_path, pythia_file_path) ) return;
+    
+    // Combined file of jets from thermal and PYTHIA data
+    TFile* combined_file = new TFile(combined_file_path, "READ");
+    TTree* comb_fastjet_tree = (TTree*) combined_file->Get("FastJet_Tree");
+    
+    std::cout << "Reading combined file." << std::endl;
+    
+    int     c_jet_n;
+    float   c_jet_pt[100];
+    float   c_jet_y[100];
+    float   c_jet_phi[100];
+    float   c_jet_mass[100];
+    float   c_jet_area[100];
+    float   c_jet_area_err[100];
+    int     c_jet_const_n[100];
+    float   c_jet_const_pt[100][400];
+    float   c_jet_const_eta[100][400];
+    float   c_jet_const_phi[100][400];
+    
+    comb_fastjet_tree->SetBranchAddress("jet_n",            &c_jet_n);
+    comb_fastjet_tree->SetBranchAddress("jet_pt",           c_jet_pt);
+    comb_fastjet_tree->SetBranchAddress("jet_y",            c_jet_y);
+    comb_fastjet_tree->SetBranchAddress("jet_phi",          c_jet_phi);
+    comb_fastjet_tree->SetBranchAddress("jet_area",         c_jet_area);
+    comb_fastjet_tree->SetBranchAddress("jet_area_err",     c_jet_area_err);
+    comb_fastjet_tree->SetBranchAddress("jet_mass",         c_jet_mass);
+    comb_fastjet_tree->SetBranchAddress("jet_const_n",      c_jet_const_n);
+    comb_fastjet_tree->SetBranchAddress("jet_const_pt",     c_jet_const_pt);
+    comb_fastjet_tree->SetBranchAddress("jet_const_eta",    c_jet_const_eta);
+    comb_fastjet_tree->SetBranchAddress("jet_const_phi",    c_jet_const_phi);
+    
+    TTree* comb_param_tree = (TTree*) combined_file->Get("Generator_Parameters");
+    
+    int   c_gen_event_count;
+    float c_gen_pt_bias_power;
+    float c_gen_jet_pt_min;
+    float c_gen_jet_pt_max;
+    float c_gen_jet_eta_max;
+    float c_gen_pt_hat_min;
+    float c_gen_pt_hat_max;
+    float c_gen_fastjet_radius;
+    float c_gen_fastjet_pt_min;
+    int   c_gen_gaus_mean;
+    float c_gen_gaus_sigma;
+    float c_gen_gaus_norm;
+    
+    comb_param_tree->SetBranchAddress("event_count",        &c_gen_event_count);
+    comb_param_tree->SetBranchAddress("pt_bias_power",      &c_gen_pt_bias_power);
+    comb_param_tree->SetBranchAddress("jet_pt_min",         &c_gen_jet_pt_min);
+    comb_param_tree->SetBranchAddress("jet_pt_max",         &c_gen_jet_pt_max);
+    comb_param_tree->SetBranchAddress("jet_eta_max",        &c_gen_jet_eta_max);
+    comb_param_tree->SetBranchAddress("pt_hat_min",         &c_gen_pt_hat_min);
+    comb_param_tree->SetBranchAddress("pt_hat_max",         &c_gen_pt_hat_max);
+    comb_param_tree->SetBranchAddress("fastjet_radius",     &c_gen_fastjet_radius);
+    comb_param_tree->SetBranchAddress("fastjet_pt_min",     &c_gen_fastjet_pt_min);
+    comb_param_tree->SetBranchAddress("gaus_mean",          &c_gen_gaus_mean);
+    comb_param_tree->SetBranchAddress("gaus_sigma",         &c_gen_gaus_sigma);
+    comb_param_tree->SetBranchAddress("gaus_norm",          &c_gen_gaus_norm);
+    
+    // File of jets from PYTHIA
+    TFile* pythia_file = new TFile(pythia_file_path, "READ");
+    TTree* pyth_fastjet_tree = (TTree*) pythia_file->Get("FastJet_Tree");
+    
+    std::cout << "Reading PYTHIA file." << std::endl;
+    
+    int     p_jet_n;
+    float   p_jet_pt[100];
+    float   p_jet_y[100];
+    float   p_jet_phi[100];
+    float   p_jet_mass[100];
+    float   p_jet_area[100];
+    float   p_jet_area_err[100];
+    int     p_jet_const_n[100];
+    float   p_jet_const_pt[100][400];
+    float   p_jet_const_eta[100][400];
+    float   p_jet_const_phi[100][400];
+    
+    pyth_fastjet_tree->SetBranchAddress("jet_n",         &p_jet_n);
+    pyth_fastjet_tree->SetBranchAddress("jet_pt",        p_jet_pt);
+    pyth_fastjet_tree->SetBranchAddress("jet_y",         p_jet_y);
+    pyth_fastjet_tree->SetBranchAddress("jet_phi",       p_jet_phi);
+    pyth_fastjet_tree->SetBranchAddress("jet_area",      p_jet_area);
+    pyth_fastjet_tree->SetBranchAddress("jet_area_err",  p_jet_area_err);
+    pyth_fastjet_tree->SetBranchAddress("jet_mass",      p_jet_mass);
+    pyth_fastjet_tree->SetBranchAddress("jet_const_n",   p_jet_const_n);
+    pyth_fastjet_tree->SetBranchAddress("jet_const_pt",  p_jet_const_pt);
+    pyth_fastjet_tree->SetBranchAddress("jet_const_eta", p_jet_const_eta);
+    pyth_fastjet_tree->SetBranchAddress("jet_const_phi", p_jet_const_phi);
+    
+    comb_param_tree->GetEntry(0);
+    
+    char output_file_params[200];
+    snprintf(output_file_params, 200, "%s_B%.0f_%.0f_%.0f_N%i", output_base_name, c_gen_pt_bias_power, c_gen_jet_pt_min, c_gen_jet_pt_max, c_gen_event_count);
+    
+    char output_file_path[200];
+    snprintf(output_file_path, 200, "%s/ML_Prep_%s.root", output_directory, output_file_params);
+    TFile* output_file = new TFile(output_file_path, "UPDATE");
+    
+    char output_tree_name[200];
+    snprintf(output_tree_name, 200, "Jet_ML_%s", output_file_params);
+    char output_tree_description[200];
+    snprintf(output_tree_description, 200, "Generated with bias of pT^%.0f, %.1f - %.1f GeV, %i events, jet match radius of %.2f", c_gen_pt_bias_power, c_gen_jet_pt_min, c_gen_jet_pt_max, c_gen_event_count, fastjet_match_radius);
+    TTree* output_tree = new TTree(output_tree_name, output_tree_description);
+    
+    std::cout << "----- Preparing " << output_tree_name << " -----" << std::endl;
+    
+    // Creates flat TTree of generator parameters
+    TTree* output_param_tree = new TTree("ML_Prep_Parameters", "Flat tree of parameters used for event generation and ML preparation");
+    
+    std::cout << "Making output parameter tree." << std::endl;
+    
+    int   gen_event_count;
+    float gen_pt_bias_power;
+    float gen_jet_pt_min;
+    float gen_jet_pt_max;
+    float gen_jet_eta_max;
+    float gen_pt_hat_min;
+    float gen_pt_hat_max;
+    float gen_fastjet_radius;
+    float gen_fastjet_pt_min;
+    float gen_fastjet_match_radius;
+    float gen_beam_power;
+    float gen_detector_eta;
+    int   gen_gaus_mean;
+    float gen_gaus_sigma;
+    float gen_gaus_norm;
+    
+    output_param_tree->Branch("event_count",          &gen_event_count);
+    output_param_tree->Branch("pt_bias_power",        &gen_pt_bias_power);
+    output_param_tree->Branch("jet_pt_min",           &gen_jet_pt_min);
+    output_param_tree->Branch("jet_pt_max",           &gen_jet_pt_max);
+    output_param_tree->Branch("jet_eta_max",          &gen_jet_eta_max);
+    output_param_tree->Branch("pt_hat_min",           &gen_pt_hat_min);
+    output_param_tree->Branch("pt_hat_max",           &gen_pt_hat_max);
+    output_param_tree->Branch("fastjet_radius",       &gen_fastjet_radius);
+    output_param_tree->Branch("fastjet_pt_min",       &gen_fastjet_pt_min);
+    output_param_tree->Branch("fastjet_match_radius", &gen_fastjet_match_radius);
+    output_param_tree->Branch("beam_power",           &gen_beam_power);
+    output_param_tree->Branch("detector_eta",         &gen_detector_eta);
+    output_param_tree->Branch("gaus_mean",            &gen_gaus_mean);
+    output_param_tree->Branch("gaus_sigma",           &gen_gaus_sigma);
+    output_param_tree->Branch("gaus_norm",            &gen_gaus_norm);
+    
+    gen_event_count             = c_gen_event_count;
+    gen_pt_bias_power           = c_gen_pt_bias_power;
+    gen_jet_pt_min              = c_gen_jet_pt_min;
+    gen_jet_pt_max              = c_gen_jet_pt_max;
+    gen_jet_eta_max             = c_gen_jet_eta_max;
+    gen_pt_hat_min              = c_gen_pt_hat_min;
+    gen_pt_hat_max              = c_gen_pt_hat_max;
+    gen_fastjet_radius          = c_gen_fastjet_radius;
+    gen_fastjet_pt_min          = c_gen_fastjet_pt_min;
+    gen_fastjet_match_radius    = fastjet_match_radius;
+    gen_gaus_mean               = c_gen_gaus_mean;
+    gen_gaus_sigma              = c_gen_gaus_sigma;
+    gen_gaus_norm               = c_gen_gaus_norm;
+    gen_beam_power              = beam_power;
+    gen_detector_eta            = detector_eta;
+    
+    if ( jet_pt_min < 0 ) jet_pt_min = c_gen_jet_pt_min;
+    if ( jet_pt_max < 0 ) jet_pt_max = c_gen_jet_pt_max;
+    
+    output_param_tree->Fill();
+    output_param_tree->Write("", TObject::kOverwrite);
+    
+    std::cout << "Output parameter tree made." << std::endl;
+    std::cout << "Jet pt min / max: " << c_gen_jet_pt_min << ", " << c_gen_jet_pt_max << std::endl;
+    
+    // Plotted Data Output Tree
+    // NOTE: This assumes jets have already been sorted from highest E to lowest E by FastJet!
+    
+    int    nEvent = pyth_fastjet_tree->GetEntries();
+    float  background_pt_median[nEvent];
+    float  thermal_E_median[nEvent];
+    float  jet_const_n_mean[nEvent];
+    float  jet_const_n_median[nEvent];
+    
+    // ML X value variables (features)
+    int    jet_index;
+    float  jet_pt_raw;
+    float  jet_pt_corr;
+    float  jet_pt_true;
+    float  jet_mass;
+    float  jet_area;
+    float  jet_area_err;
+    int    jet_const_n;
+    float  const_pt_mean;
+    float  const_pt_median;
+    float  const_1_pt;
+    float  const_2_pt;
+    float  const_3_pt;
+    float  const_4_pt;
+    float  const_5_pt;
+    float  const_6_pt;
+    float  const_7_pt;
+    float  const_8_pt;
+    float  const_9_pt;
+    float  const_10_pt;
+    float  jet_y;
+    float  jet_phi;
+    float  jet_rho;
+    float  background_rho;
+    
+    output_tree->Branch("jet_index",            &jet_index);
+    output_tree->Branch("jet_pt_raw",           &jet_pt_raw,        "jet_pt_raw/F");
+    output_tree->Branch("jet_pt_corr",          &jet_pt_corr,       "jet_pt_corr/F");
+    output_tree->Branch("jet_pt_true",          &jet_pt_true,       "jet_pt_true/F");
+    output_tree->Branch("jet_mass",             &jet_mass,          "jet_mass/F");
+    output_tree->Branch("jet_area",             &jet_area,          "jet_area/F");
+    output_tree->Branch("jet_area_err",         &jet_area_err,      "jet_area_err/F");
+    output_tree->Branch("jet_const_n",          &jet_const_n,       "jet_const_n/I");
+    output_tree->Branch("const_pt_mean",        &const_pt_mean,     "const_pt_mean/F");
+    output_tree->Branch("const_pt_median",      &const_pt_median,   "const_pt_median/F");
+    output_tree->Branch("const_1_pt",           &const_1_pt,        "const_1_pt/F");
+    output_tree->Branch("const_2_pt",           &const_2_pt,        "const_2_pt/F");
+    output_tree->Branch("const_3_pt",           &const_3_pt,        "const_3_pt/F");
+    output_tree->Branch("const_4_pt",           &const_4_pt,        "const_4_pt/F");
+    output_tree->Branch("const_5_pt",           &const_5_pt,        "const_5_pt/F");
+    output_tree->Branch("const_6_pt",           &const_6_pt,        "const_6_pt/F");
+    output_tree->Branch("const_7_pt",           &const_7_pt,        "const_7_pt/F");
+    output_tree->Branch("const_8_pt",           &const_8_pt,        "const_8_pt/F");
+    output_tree->Branch("const_9_pt",           &const_9_pt,        "const_9_pt/F");
+    output_tree->Branch("const_10_pt",          &const_10_pt,       "const_10_pt/F");
+    output_tree->Branch("jet_y",                &jet_y,             "jet_y/F");
+    output_tree->Branch("jet_phi",              &jet_phi,           "jet_phi/F");
+    output_tree->Branch("jet_rho",              &jet_rho,           "jet_rho/F");
+    output_tree->Branch("background_rho",       &background_rho);
+    
+    int jet_const_n_total = 0;
+    int jet_true_pythia_counter = 0;
+    int jet_true_paper_counter = 0;
+    
+    std::cout << "Starting jet finding on combined tree." << std::endl;
+    
+    for ( int e = 0 ; e < comb_fastjet_tree->GetEntries() ; e++ ) {
+        comb_fastjet_tree->GetEntry(e);
+        pyth_fastjet_tree->GetEntry(e);
+        
+        if ( print_out && ( e % print_every_x ) == 0 ) std::cout << "Getting jets from event " << e << std::endl;
+        
+        // Finds the median pt of the background jets
+        float  background_jet_pt[100];
+        float  background_jet_area[100];
+        float  background_rho_arr[100];
+        float  background_area_median;
+        int    background_jet_n = 0;
+        float  jet_const_n_arr[400];
+        int    jet_const_n_event = 0;
+        
+        for ( int j = 0 ; j < c_jet_n ; j++ ) {
+            jet_const_n_total++;
+            jet_const_n_arr[j] = c_jet_const_n[j];
+            jet_const_n_event++;
+            if (j > 1) {
+                background_jet_pt[j-2]   = c_jet_pt[j];
+                background_jet_area[j-2] = c_jet_area[j];
+                background_rho_arr[j-2]  = c_jet_pt[j] / c_jet_area[j];
+                background_jet_n++;
+            }
+        }
+        
+        background_area_median  = TMath::Median(background_jet_n, background_jet_area);
+        background_pt_median[e] = TMath::Median(background_jet_n, background_jet_pt) * background_area_median;
+        background_rho          = TMath::Median(background_jet_n, background_rho_arr);
+        
+        jet_const_n_mean[e] = TMath::Mean(jet_const_n_event, jet_const_n_arr);
+        jet_const_n_median[e] = TMath::Median(jet_const_n_event, jet_const_n_arr);
+        
+        // Loops through jets for machine learning predictors
+        if ( print_out && ( e % print_every_x ) == 0 ) std::cout << "Jets for event " << e << ": " << c_jet_n << std::endl;
+        
+        float const_total_pt;
+        float const_pythia_pt;
+        int   pythia_match = -1;
+        
+        if ( lowest_jet == 0 ) lowest_jet = c_jet_n;
+        
+        for ( int j = 0 ; j < lowest_jet ; j++ ) {
+            
+            // Iterate through pythia jets to match jet pT_true
+            pythia_match = -1;
+            
+            for ( int k = 0 ; k < p_jet_n ; k++ ) {
+                if ( pythia_match >= 0 ) continue;
+                if ( ( pow((p_jet_y[k] - c_jet_y[j]), 2) + pow((p_jet_phi[k] - c_jet_phi[j]), 2) ) < pow(fastjet_match_radius, 2)) {
+                    if ( p_jet_pt[k] > jet_pt_min && p_jet_pt[k] < jet_pt_max ) {
+                        pythia_match = k;
+                        if ( print_out && ( e % print_every_x ) == 0 ) std::cout << "Combined jet " << j << " matches truth jet " << k << std::endl;
+                        if ( debug ) std::cout << "Match found!" << std::endl;
+                    }
+                }
+            }
+            
+            if ( pythia_match < 0 ) continue;
+            if ( p_jet_pt[pythia_match] < jet_pt_min && p_jet_pt[pythia_match] > jet_pt_max ) continue;
+            
+            // Iterate through constituent particles to collect their pT for mean and median
+            float  jet_const_pt_arr[400];
+            
+            for ( int p = 0 ; p < c_jet_const_n[j] ; p++ ) {
+                jet_const_pt_arr[p] = c_jet_const_pt[j][p];
+                const_total_pt += c_jet_const_pt[j][p];
+            }
+            
+            std::sort(jet_const_pt_arr, jet_const_pt_arr + jet_const_n, std::greater<>());
+            
+            jet_index       = j;
+            jet_pt_raw      = c_jet_pt[j];
+            jet_pt_corr     = c_jet_pt[j] - (background_rho * c_jet_area[j]);
+            jet_mass        = c_jet_mass[j];
+            jet_area        = c_jet_area[j];
+            jet_const_n     = c_jet_const_n[j];
+            const_pt_mean   = TMath::Mean(jet_const_n, jet_const_pt_arr);
+            const_pt_median = TMath::Median(jet_const_n, jet_const_pt_arr);
+            const_1_pt      = jet_const_pt_arr[0];
+            const_2_pt      = jet_const_pt_arr[1];
+            const_3_pt      = jet_const_pt_arr[2];
+            const_4_pt      = jet_const_pt_arr[3];
+            const_5_pt      = jet_const_pt_arr[4];
+            const_6_pt      = jet_const_pt_arr[5];
+            const_7_pt      = jet_const_pt_arr[6];
+            const_8_pt      = jet_const_pt_arr[7];
+            const_9_pt      = jet_const_pt_arr[8];
+            const_10_pt     = jet_const_pt_arr[9];
+            jet_y           = c_jet_y[j];
+            jet_phi         = c_jet_phi[j];
+            jet_rho         = background_rho;
+            
+            jet_pt_true     = p_jet_pt[pythia_match];
+                        
+            jet_true_pythia_counter++;
+            if ( print_out && jet_pt_true != 0 && (e % print_every_x) == 0 ) std::cout << e << "-" << j << ": Truth_PYTHIA Jet: " << jet_pt_true << " ----- " << std::endl;
+            
+            output_tree->Fill();
+        }
+    }
+    
+    output_tree->Write("", TObject::kOverwrite);
+    output_file->Write("", TObject::kOverwrite);
+    
+    delete output_tree;
+    delete output_param_tree;
+    
+    std::cout << "Data written to file." << std::endl;
+    
+    pythia_file->Close();
+    combined_file->Close();
+    output_file->Close();
+    
+    delete pythia_file;
+    delete combined_file;
+    delete output_file;
+    
+    std::cout << "Files closed." << std::endl;
+    
+    std::cout << "----- Completed " << output_tree_name << " -----" << std::endl;
+}
+
+
+
 // ----- EVENT GENERATOR -----
 
 
@@ -690,7 +1300,8 @@ void Event_Generator(
     ) {
     
     std::cout << ">>> Generating PYTHIA Events <<<" << std::endl;
-    Pythia_Generator(
+    char pythia_file_path[500];
+    snprintf(pythia_file_path, 500, Pythia_Generator(
         output_base_name,
         output_directory,
         event_count,
@@ -702,40 +1313,50 @@ void Event_Generator(
         pt_hat_max,
         fastjet_radius,
         fastjet_pt_min
-        );
+        ));
 
     std::cout << ">>> Generating Thermal Events <<<" << std::endl;
-    Thermal_Generator(
+    char thermal_file_path[500];
+    snprintf(thermal_file_path, 500, Thermal_Generator(
         output_base_name,
         output_directory,
         event_count,
         pt_bias_power,
         jet_pt_min,
         jet_pt_max
-        );
-
+        ));
+    
+//    char pythia_file_path[500];
+//    snprintf(pythia_file_path, 500, "%s/Pyth_%s_B%.0f_%.0f_%.0f_N%i.root", output_directory, output_base_name, pt_bias_power, jet_pt_min, jet_pt_max, event_count);
+//
+//    char thermal_file_path[500];
+//    snprintf(thermal_file_path, 500, "%s/Ther_%s_B%.0f_%.0f_%.0f_N%i.root", output_directory, output_base_name, pt_bias_power, jet_pt_min, jet_pt_max, event_count);
+//
+//    char combined_file_path[500];
+//    snprintf(combined_file_path, 500, "%s/Comb_%s_B%.0f_%.0f_%.0f_N%i.root", output_directory, output_base_name, pt_bias_power, jet_pt_min, jet_pt_max, event_count);
+    
     std::cout << ">>> Combining PYTHIA and Thermal Events <<<" << std::endl;
-    Combine_Events(
+    char combined_file_path[500];
+    snprintf(combined_file_path, 500, "%s", Combine_Events(
         output_base_name,
         output_directory,
-        event_count,
-        pt_bias_power,
-        jet_pt_min,
-        jet_pt_max
-        );
+        pythia_file_path,
+        thermal_file_path
+        ));
     
     std::cout << ">>> Clustering Combined Jets <<<" << std::endl;
     Jet_Clusterer(
-        output_base_name,
-        output_directory,
-        event_count,
-        pt_bias_power,
-        jet_pt_min,
-        jet_pt_max,
-        fastjet_radius,
-        fastjet_pt_min
+        combined_file_path
         );
     
+    std::cout << ">>> Preparing ML File <<<" << std::endl;
+    Jet_ML_Prep(
+        output_base_name,
+        output_directory,
+        combined_file_path,
+        pythia_file_path
+        );
+        
     std::cout << ">>> Event Generation and Jet Clustering Complete! <<<" << std::endl;
 }
 
@@ -759,20 +1380,20 @@ int main() {
     std::__fs::filesystem::create_directories(dir_data);
     std::__fs::filesystem::create_directories(dir_plots);
     
+//    Event_Generator(
+//        "Train", // output_base_name (pt_bias, pt_min, pt_max, and event_cout will be added to this name in the functions)
+//        dir_data, // output_directory
+//        500000, // event_count
+//        8., // pt_bias_power
+//        10., // jet_pt_min
+//        90. // jet_pt_max
+//        );
+    
     Event_Generator(
         "Train", // output_base_name (pt_bias, pt_min, pt_max, and event_cout will be added to this name in the functions)
         dir_data, // output_directory
         500000, // event_count
-        8., // pt_bias_power
-        10., // jet_pt_min
-        90. // jet_pt_max
-        );
-    
-    Event_Generator(
-        "Test", // output_base_name (pt_bias, pt_min, pt_max, and event_cout will be added to this name in the functions)
-        dir_data, // output_directory
-        500000, // event_count
-        8., // pt_bias_power
+        0., // pt_bias_power
         10., // jet_pt_min
         90. // jet_pt_max
         );
