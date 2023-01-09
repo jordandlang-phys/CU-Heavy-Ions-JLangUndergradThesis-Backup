@@ -163,10 +163,16 @@ def Train_LinearRegression(
 
     # Outputs regression coefficients
     lr_coeffs = lr_estimator.coef_
+    intercept = lr_estimator.intercept_
+    print(intercept)
+    print(lr_coeffs)
+    lr_coeffs = np.append(lr_coeffs, intercept)
+    print(lr_coeffs)
 
     print("Regression Coefficients:")
     for i in range(len(lr_coeffs)) :
         print(features_labels[i], lr_coeffs[i])
+    
         
     print(type(lr_pipeline))
     

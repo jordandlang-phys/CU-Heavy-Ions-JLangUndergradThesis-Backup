@@ -195,7 +195,7 @@ char* Pythia_Generator(
             if (!pythia.event[p].isFinal()) continue;                       // Ends if final particle
             if (!pythia.event[p].isCharged()) continue;                     // Skips neutral particles
             if (pythia.event[p].pT() < 0.15) continue;                      // Skips particles with pT < 0.15
-            if (fabs(pythia.event[p].eta()) > detector_eta) continue;   // Skips particles with rapidity outside the detector rapidity
+            if (fabs(pythia.event[p].eta()) > detector_eta) continue;       // Skips particles with rapidity outside the detector rapidity
 
             particle_pt[particle_n]  = pythia.event[p].pT();
             particle_eta[particle_n] = pythia.event[p].eta();
@@ -237,7 +237,10 @@ char* Pythia_Generator(
             jet_y_temp = jet_list[j].rap();
             
             if ( (jet_pt_temp >= jet_pt_min) && (jet_pt_temp <= jet_pt_max) &&
-                (jet_y_temp >= -jet_eta_max) && (jet_y_temp <= jet_eta_max) ) accept_event = true;
+                (jet_y_temp >= -jet_eta_max) && (jet_y_temp <= jet_eta_max) ) {
+                accept_event = true;
+                break;
+            }
             else continue;
         }
         
@@ -562,9 +565,6 @@ char* Combine_Events(
     
     pythia_param_tree->GetEntry(0);
     
-    float beam_power   = p_gen_beam_power;
-    float detector_eta = p_gen_detector_eta;
-    
     if (print_out) std::cout << "TTree Accessed: Pythia_Tree" << std::endl;
     
     // Open thermal events data and access thermal TTree
@@ -663,7 +663,6 @@ char* Combine_Events(
     float combined_pt[4200];
     float combined_eta[4200];
     float combined_phi[4200];
-    int   combined_jet_n;
     int   combined_jet_class;
     
     combined_tree->Branch("particle_n",         &combined_n);
@@ -745,7 +744,6 @@ void Combined_Jet_Clusterer(
     TFile* input_file = new TFile(combined_file_path, "UPDATE");
     TTree* input_tree = (TTree*) input_file->Get("Combined_Tree");
     
-    int   input_ntotal = 0;
     int   input_n;
     float input_pt[4200];
     float input_eta[4200];
@@ -773,7 +771,6 @@ void Combined_Jet_Clusterer(
     
     float fastjet_radius = gen_fastjet_radius;
     float fastjet_pt_min = gen_fastjet_pt_min;
-    float beam_power     = gen_beam_power;
     float detector_eta   = gen_detector_eta;
     
     std::cout << fastjet_radius << ", " << fastjet_pt_min << std::endl;
@@ -1043,6 +1040,7 @@ void Jet_ML_Prep(
     char  pythia_file_path[500],        // Full name of combined output file
     float jet_pt_min = -1.,             // If >0, overrides min jet pt accepted. If <0 uses min from input file parameters
     float jet_pt_max = -1.,             // If >0, overrides max jet pt accepted. If <0 uses max from input file parameters
+    float jet_eta_max = d_jet_eta_max,  // Highest rapidity to accept jets
     int   softest_jet_index = d_softest_jet_index,          // Only accepts the top [softest_jet_index] jets. If softest_jet_index = 0, accepts all jets
     float fastjet_match_radius = d_fastjet_match_radius     // Two jets are matched if they are within this radius squared.
     ) {
@@ -1275,8 +1273,11 @@ void Jet_ML_Prep(
     output_tree->Branch("jet_phi",              &jet_phi,           "jet_phi/F");
     output_tree->Branch("jet_rho",              &jet_rho,           "jet_rho/F");
     
-    int jet_true_pythia_counter = 0;
-    int jet_true_paper_counter = 0;
+    int truth_matched_counter = 0;
+    int truth_unmatched_counter = 0;
+    int truth_outside_pt_counter = 0;
+    int truth_outside_y_counter = 0;
+    float fastjet_match_rad_sq = pow(fastjet_match_radius, 2);
     
     std::cout << "Starting jet finding on combined tree." << std::endl;
     
@@ -1307,52 +1308,83 @@ void Jet_ML_Prep(
         
         char rho_output[100];
         snprintf(rho_output, 100, "Event %i / %i bg_jets / rho: %.3f", e, background_jet_n, background_rho);
-        std::cout << rho_output << std::endl;
+        if ( debug ) std::cout << rho_output << std::endl;
         
         // Loops through jets for machine learning predictors
         if ( print_out && ( e % print_every_x ) == 0 ) std::cout << "Jets for event " << e << ": " << c_jet_n << std::endl;
         
-        float const_total_pt;
         float const_pythia_pt;
-        int   pythia_match = -1;
-        
         if ( softest_jet_index == 0 ) softest_jet_index = c_jet_n;
         
-        for ( int j = 0 ; j < softest_jet_index ; j++ ) {
-            
+        for ( int k = 0 ; k < p_jet_n ; k++ ) {
             // Iterate through pythia jets to match jet pT_true
-            pythia_match = -1;
+            int c_match = -1;
             
-            for ( int k = 0 ; k < p_jet_n ; k++ ) {
-                if ( pythia_match >= 0 ) continue;
-                if ( ( pow((p_jet_y[k] - c_jet_y[j]), 2) + pow((p_jet_phi[k] - c_jet_phi[j]), 2) ) < pow(fastjet_match_radius, 2)) {
-                    if ( p_jet_pt[k] > jet_pt_min && p_jet_pt[k] < jet_pt_max ) {
-                        pythia_match = k;
-                        if ( print_out && ( e % print_every_x ) == 0 ) std::cout << "Combined jet " << j << " matches truth jet " << k << std::endl;
-                        if ( debug ) std::cout << "Match found!" << std::endl;
+            int c_match_tracker[100] = {0};
+            
+            for ( int j = 0 ; j < softest_jet_index ; j++ ) {
+                if ( c_match_tracker[j] == 1 ) continue; // Skips if the combined jet has already been paired
+                
+                float jet_y_sq = pow((p_jet_y[k] - c_jet_y[j]), 2);
+                float jet_phi_sq = pow((p_jet_phi[k] - c_jet_phi[j]), 2);
+                
+                if ( jet_phi_sq + jet_y_sq > fastjet_match_rad_sq ) { // Triggers the 2pi offset check only if needed (hopefully speeds this up)
+                    float jet_phi_sq_B;
+                    if ( p_jet_phi[k] > c_jet_phi[j] ) {
+                        jet_phi_sq_B = pow((p_jet_phi[k] - 2*math_pi - c_jet_phi[j]), 2);
                     }
+                    else {
+                        jet_phi_sq_B = pow((c_jet_phi[k] - 2*math_pi - p_jet_phi[j]), 2);
+                    }
+                    if ( jet_phi_sq > jet_phi_sq_B ) jet_phi_sq = jet_phi_sq_B;
+                    
+                    if ( jet_phi_sq + jet_y_sq > fastjet_match_rad_sq ) continue; // Skips if the distance between PYTHIA and combined jets is larger than match radius
                 }
+                
+                c_match = j;
+                c_match_tracker[j] = 1;
+                if ( print_out && ( e % print_every_x ) == 0 ) std::cout << "Combined jet " << j << " matches truth jet " << k << std::endl;
+                if ( debug ) std::cout << "Match found!" << std::endl;
+                break;
             }
             
-            if ( pythia_match < 0 ) continue;
-            if ( p_jet_pt[pythia_match] < jet_pt_min && p_jet_pt[pythia_match] > jet_pt_max ) continue;
+            // Skips if jet pT is outside range
+            if ( p_jet_pt[k] < jet_pt_min || p_jet_pt[k] > jet_pt_max ) {
+                truth_outside_pt_counter++;
+                if ( debug) std::cout << "Event: " << e << " Truth Jet: " << k << " is outside pt min/max. pT = " << p_jet_pt[k] << std::endl;
+                continue;
+            }
+            // Skips if jet rapidity is outside range
+            if ( p_jet_y[k] < -jet_eta_max || p_jet_y[k] > jet_eta_max ) {
+                truth_outside_y_counter++;
+                if ( debug) std::cout << "Event: " << e << " Truth Jet: " << k << " is outside rapidity. y = " << p_jet_y[k] << std::endl;
+                continue;
+            }
+            // Skips if jet can't be matched to a PYTHIA jet
+            if ( c_match < 0 ) {
+                truth_unmatched_counter++;
+                if ( debug) std::cout << "Event: " << e << " Truth Jet: " << k << " has no match found." << std::endl;
+                if ( debug) std::cout << "    p_phi: " << p_jet_phi[k] << ", p_y: " << p_jet_y[k] << std::endl;
+                continue;
+            }
+            truth_matched_counter++;
             
             // Iterate through constituent particles to collect their pT for mean and median
             float  jet_const_pt_arr[400];
             
-            for ( int p = 0 ; p < c_jet_const_n[j] ; p++ ) {
-                jet_const_pt_arr[p] = c_jet_const_pt[j][p];
-                const_total_pt += c_jet_const_pt[j][p];
+            for ( int p = 0 ; p < c_jet_const_n[c_match] ; p++ ) {
+                jet_const_pt_arr[p] = c_jet_const_pt[c_match][p];
             }
             
             std::sort(jet_const_pt_arr, jet_const_pt_arr + jet_const_n, std::greater<>());
             
-            jet_index       = j;
-            jet_pt_raw      = c_jet_pt[j];
-            jet_pt_corr     = c_jet_pt[j] - (background_rho * c_jet_area[j]);
-            jet_mass        = c_jet_mass[j];
-            jet_area        = c_jet_area[j];
-            jet_const_n     = c_jet_const_n[j];
+            jet_index       = c_match;
+            jet_pt_raw      = c_jet_pt[c_match];
+            jet_pt_corr     = c_jet_pt[c_match] - (background_rho * c_jet_area[c_match]);
+            jet_mass        = c_jet_mass[c_match];
+            jet_area        = c_jet_area[c_match];
+            jet_area_err    = c_jet_area_err[c_match];
+            jet_const_n     = c_jet_const_n[c_match];
             const_pt_mean   = TMath::Mean(jet_const_n, jet_const_pt_arr);
             const_pt_median = TMath::Median(jet_const_n, jet_const_pt_arr);
             const_1_pt      = jet_const_pt_arr[0];
@@ -1365,18 +1397,21 @@ void Jet_ML_Prep(
             const_8_pt      = jet_const_pt_arr[7];
             const_9_pt      = jet_const_pt_arr[8];
             const_10_pt     = jet_const_pt_arr[9];
-            jet_y           = c_jet_y[j];
-            jet_phi         = c_jet_phi[j];
+            jet_y           = c_jet_y[c_match];
+            jet_phi         = c_jet_phi[c_match];
             jet_rho         = background_rho;
             
-            jet_pt_true     = p_jet_pt[pythia_match];
-                        
-            jet_true_pythia_counter++;
-            if ( print_out && jet_pt_true != 0 && (e % print_every_x) == 0 ) std::cout << e << "-" << j << ": Truth_PYTHIA Jet: " << jet_pt_true << " ----- " << std::endl;
+            jet_pt_true     = p_jet_pt[k];
+            
+            if ( print_out && jet_pt_true != 0 && (e % print_every_x) == 0 ) std::cout << e << "-" << c_match << ": Truth_PYTHIA Jet: " << jet_pt_true << " ----- " << std::endl;
             
             output_tree->Fill();
         }
     }
+    
+    char truth_match_results[200];
+    snprintf(truth_match_results, 200, "Matched %i jets. %i jets unmatched. %i jets outside pt. %i jets outside y. Unmatched ratio is: %.4f", truth_matched_counter, truth_unmatched_counter, truth_outside_pt_counter, truth_outside_y_counter, float(truth_unmatched_counter)/(truth_matched_counter + truth_unmatched_counter) );
+    std::cout << truth_match_results << std::endl;
     
     output_tree->Write("", TObject::kOverwrite);
     output_file->Write("", TObject::kOverwrite);
@@ -1488,12 +1523,14 @@ void Jet_Generator_Full(
         pythia_file_path,
         jet_pt_min,
         jet_pt_max,
+        jet_eta_max,
         softest_jet_index,
         fastjet_match_radius
         );
         
     std::cout << ">>> Event Generation and Jet Clustering Complete! <<<" << std::endl;
 }
+
 } // Ends the Jet_Generator namespace
 
 

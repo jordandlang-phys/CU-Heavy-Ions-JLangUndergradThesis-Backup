@@ -33,7 +33,7 @@ const float d_MH_par_4              = -8.491;   // Modified Hagedorn function, p
 const float d_jet_eta_max           = 0.5;      // Largest jet rapidity to consider.
 const float d_pt_hat_min            = 7.5;      // [GeV] ptHatMin value.
 const float d_pt_hat_max            = 0.;       // [GeV] ptHatMax value. If 0. then no upper limit.
-const float d_fastjet_pt_min        = 5.0;      // [GeV] Minimum pT considered by FastJet for a jet.
+const float d_fastjet_pt_min        = 8.0;      // [GeV] Minimum pT considered by FastJet for a jet.
 const float d_fastjet_radius        = 0.4;      // Jet radius used by FastJet.
 const float d_fastjet_match_radius  = 0.3;      // Matches combined jets to PYTHIA jets within this radius.
 
