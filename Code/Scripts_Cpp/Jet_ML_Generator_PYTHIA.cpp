@@ -1209,6 +1209,7 @@ void Jet_ML_Prep(
     gen_beam_power              = c_gen_beam_power;
     gen_detector_eta            = c_gen_detector_eta;
     
+    // Sets the pt_min and pt_max cuts - if not defined these will be established by the input files
     if ( jet_pt_min < 0 ) jet_pt_min = c_gen_jet_pt_min;
     if ( jet_pt_max < 0 ) jet_pt_max = c_gen_jet_pt_max;
     
@@ -1313,7 +1314,6 @@ void Jet_ML_Prep(
         // Loops through jets for machine learning predictors
         if ( print_out && ( e % print_every_x ) == 0 ) std::cout << "Jets for event " << e << ": " << c_jet_n << std::endl;
         
-        float const_pythia_pt;
         if ( softest_jet_index == 0 ) softest_jet_index = c_jet_n;
         
         for ( int k = 0 ; k < p_jet_n ; k++ ) {

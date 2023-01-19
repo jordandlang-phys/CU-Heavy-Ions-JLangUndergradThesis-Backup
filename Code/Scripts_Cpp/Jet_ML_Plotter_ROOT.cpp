@@ -255,7 +255,8 @@ void Plot_ML_LR_Coefficients_F12(
     char  input_tree_name[10][100],
     char  plot_file_name[100],
     float test_min_max_array[20][2],
-    int   bin_count
+    int   bin_count,
+    bool  show_offset
     ) {
     
     TFile* input_file = new TFile(input_file_path, "READ");
@@ -449,7 +450,7 @@ void Plot_ML_LR_Coefficients_F12(
     tg_lr_intercept->SetMarkerSize(mark_circ_open[1]);
     
     // Plot coefficient histograms onto canvas
-    tmg_canvas_plot->Add(tg_lr_intercept, "PL"); // Draws intercept values first to be in background
+    if ( show_offset ) tmg_canvas_plot->Add(tg_lr_intercept, "PL"); // Draws intercept values first to be in background
     tmg_canvas_plot->Add(tg_jet_pt_raw, "PL");
     tmg_canvas_plot->Add(tg_jet_pt_corr, "PL");
     tmg_canvas_plot->Add(tg_jet_mass, "PL");
@@ -480,7 +481,7 @@ void Plot_ML_LR_Coefficients_F12(
     legend->AddEntry(tg_const_pt_4,       "Constituent 4 p_{T}", "lp");
     legend->AddEntry(tg_jet_y,            "Jet y", "lp");
     legend->AddEntry(tg_jet_rho,          "Jet #rho", "lp");
-    legend->AddEntry(tg_lr_intercept,     "Lin. Reg. Intercept", "lp");
+    if ( show_offset ) legend->AddEntry(tg_lr_intercept,     "Lin. Reg. Intercept", "lp");
     
     legend->SetLineWidth(0);
     legend->SetFillStyle(0);

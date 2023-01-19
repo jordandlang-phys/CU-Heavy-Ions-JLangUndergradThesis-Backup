@@ -6,7 +6,7 @@ using namespace Jet_Plotter;
 void MACRO_Jet_ML_Plotter_B8() {
     
     char dir_master[200];
-    sprintf(dir_master, "../../Files/Joey_Data");
+    sprintf(dir_master, "../../Files/Comparison_Test_4");
     
     char dir_data[200];
     sprintf(dir_data, "%s/Data", dir_master);
@@ -266,13 +266,24 @@ void MACRO_Jet_ML_Plotter_B8() {
 
     char coeff_plot_file_path_2[200];
     sprintf(coeff_plot_file_path_2, "%s/ML_Results/Train_20GeV_Bins/ML_Train_B8_F12_10_90_Coefficients.pdf", dir_data);
+    char coeff_plot_file_path_2B[200];
+    sprintf(coeff_plot_file_path_2B, "%s/ML_Results/Train_20GeV_Bins/ML_Train_B8_F12_10_90_Coefficients_ShowInt.pdf", dir_data);
 
     Plot_ML_LR_Coefficients_F12(
         output_file_path_2,
         input_tree_names_2,
         coeff_plot_file_path_2,
         test_min_max_array_2,
-        7
+        7,
+        false
+    );
+    Plot_ML_LR_Coefficients_F12(
+        output_file_path_2,
+        input_tree_names_2,
+        coeff_plot_file_path_2B,
+        test_min_max_array_2,
+        7,
+        true
     );
 
     std::cout << "Coefficient Plot Completed" << std::endl;
@@ -411,13 +422,24 @@ void MACRO_Jet_ML_Plotter_B8() {
 
     char coeff_plot_file_path_3[200];
     sprintf(coeff_plot_file_path_3, "%s/ML_Results/Train_30GeV_Bins/ML_Train_B8_F12_10_90_Coefficients.pdf", dir_data);
+    char coeff_plot_file_path_3B[200];
+    sprintf(coeff_plot_file_path_3B, "%s/ML_Results/Train_30GeV_Bins/ML_Train_B8_F12_10_90_Coefficients_ShowInt.pdf", dir_data);
 
     Plot_ML_LR_Coefficients_F12(
         output_file_path_3,
         input_tree_names_3,
         coeff_plot_file_path_3,
         test_min_max_array_3,
-        6
+        6,
+        false
+    );
+    Plot_ML_LR_Coefficients_F12(
+        output_file_path_3,
+        input_tree_names_3,
+        coeff_plot_file_path_3B,
+        test_min_max_array_3,
+        6,
+        true
     );
 
     std::cout << "Coefficient Plot Completed" << std::endl;
