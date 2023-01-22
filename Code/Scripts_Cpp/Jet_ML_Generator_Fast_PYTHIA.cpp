@@ -92,6 +92,8 @@ void Jet_Generator_Optimized(
     const int   thermal_sigma = d_thermal_sigma,        // Standard deviation for number of thermal particles
     const float pythia_beampower = d_beam_power,        // [GeV] Simulated beam power in the dector. Default defined by jet_ml_constants.h file.
     const float detector_eta = d_detector_eta,          // Maximum rapidity of the detector. Default defined by jet_ml_constants.h file.
+    const float max_pt_raw = 200.,                  // Max raw jet pT to accept
+    const bool  export_thermal = false,             // If true, exports thermal particles to root file
     const float thermal_MH_par_1 = d_MH_par_1,          // Modified Hagedorn function parameter 1
     const float thermal_MH_par_2 = d_MH_par_2,          // Modified Hagedorn function parameter 2
     const float thermal_MH_par_3 = d_MH_par_3,          // Modified Hagedorn function parameter 3
@@ -112,6 +114,7 @@ void Jet_Generator_Optimized(
     TTree* pyth_jet_tree    = new TTree("PYTHIA_Jet_Tree",          "Tree of jet clusters from PYTHIA, by event");
     TTree* comb_par_tree    = new TTree("Combined_Particle_Tree",   "Tree of particles combined from PYTHIA and thermal model generation");
     TTree* comb_jet_tree    = new TTree("Combined_Jet_Tree",        "Tree of jet clusters from combined events, by event");
+    TTree* ther_par_tree;
     
     std::cout << "Output file and trees successfully initialized." << std::endl;
     
@@ -138,6 +141,7 @@ void Jet_Generator_Optimized(
     float gen_thermal_pt_max;
     int   gen_fastjet_accept_index;
     int   gen_ml_soft_jet_index;
+    float gen_max_pt_raw;
     
     gen_param_tree->Branch("event_count",           &gen_event_count);
     gen_param_tree->Branch("jet_pt_min",            &gen_jet_pt_min);
@@ -160,6 +164,7 @@ void Jet_Generator_Optimized(
     gen_param_tree->Branch("thermal_MH_par_3",      &gen_thermal_MH_par_3);
     gen_param_tree->Branch("thermal_MH_par_4",      &gen_thermal_MH_par_4);
     gen_param_tree->Branch("ml_soft_jet_index",     &gen_ml_soft_jet_index);
+    gen_param_tree->Branch("max_pt_raw",            &gen_max_pt_raw);
     
     float thermal_norm = 1 / sqrt(2 * math_pi * pow(thermal_sigma,2)); // Sets normalization factor for gaussian
     std::cout << "Thermal Norm: " << thermal_norm << std::endl;
@@ -185,6 +190,7 @@ void Jet_Generator_Optimized(
     gen_thermal_pt_max      = thermal_pt_max;
     gen_fastjet_accept_index= fastjet_accept_index;
     gen_ml_soft_jet_index   = ml_soft_jet_index;
+    gen_max_pt_raw          = max_pt_raw;
     
     gen_param_tree->Fill();
     gen_param_tree->Write("", TObject::kOverwrite);
@@ -236,8 +242,27 @@ void Jet_Generator_Optimized(
     pyth_jet_tree->Branch("jet_const_pt",   p_jet_const_pt,   "jet_const_pt[jet_n][400]/F");
     pyth_jet_tree->Branch("jet_const_eta",  p_jet_const_eta,  "jet_const_eta[jet_n][400]/F");
     pyth_jet_tree->Branch("jet_const_phi",  p_jet_const_phi,  "jet_const_phi[jet_n][400]/F");
+    // NOTE: The hard coded size of the second array for the last 3 variables will create a LOT of 0's in the trees - this will not be included in ML
     
     std::cout << "PYTHIA_Jet_Tree tree built." << std::endl;
+    
+    // Thermal Particle Tree (ther_par_tree)
+    // This TTree stores both thermal background particle information
+    int     t_particle_n;           // particle index
+    float   t_particle_pt[3800];     // transverse momentum
+    float   t_particle_phi[3800];    // azimuthal angle
+    float   t_particle_eta[3800];    // pseudorapidity
+    float   t_particle_m[3800];      // particle mass
+    
+    if ( export_thermal ) {
+        ther_par_tree = new TTree("Thermal_Particle_Tree", "Tree of particles from thermal toy model");
+        ther_par_tree->Branch("particle_n",     &t_particle_n);
+        ther_par_tree->Branch("particle_pt",    t_particle_pt,    "particle_pt[particle_n]/F");
+        ther_par_tree->Branch("particle_eta",   t_particle_eta,   "particle_eta[particle_n]/F");
+        ther_par_tree->Branch("particle_phi",   t_particle_phi,   "particle_phi[particle_n]/F");
+        ther_par_tree->Branch("particle_m",     t_particle_m,     "particle_m[particle_n]/F");
+        std::cout << "Thermal_Jet_Tree tree built." << std::endl;
+    }
     
     // Combined Particle Tree (comb_par_tree)
     // This TTree stores both PYTHIA and thermal background particle information
@@ -282,6 +307,7 @@ void Jet_Generator_Optimized(
     comb_jet_tree->Branch("jet_const_pt",   c_jet_const_pt,   "jet_const_pt[jet_n][400]/F");
     comb_jet_tree->Branch("jet_const_eta",  c_jet_const_eta,  "jet_const_eta[jet_n][400]/F");
     comb_jet_tree->Branch("jet_const_phi",  c_jet_const_phi,  "jet_const_phi[jet_n][400]/F");
+    // NOTE: The hard coded size of the second array for the last 3 variables will create a LOT of 0's in the trees - this will not be included in ML
     
     std::cout << "Combined_Jet_Tree tree built." << std::endl;
     
@@ -442,15 +468,23 @@ void Jet_Generator_Optimized(
                 c_particle_n++;
             }
             int thermal_n = Generate_N(thermal_n_func, thermal_mean);
+            if ( export_thermal ) t_particle_n = thermal_n;
             for ( int p = 0 ; p < thermal_n ; p++) {
                 c_particle_pt[c_particle_n]     = Generate_Pt(thermal_pt_func, thermal_pt_max);
                 c_particle_eta[c_particle_n]    = Generate_Eta(thermal_eta_func, detector_eta);
                 c_particle_phi[c_particle_n]    = Generate_Phi(thermal_phi_func);
                 c_particle_m[c_particle_n]      = m_pion;
                 c_particle_source[c_particle_n] = 0;
+                if ( export_thermal ) {
+                    t_particle_pt[p]    = c_particle_pt[c_particle_n];
+                    t_particle_eta[p]   = c_particle_eta[c_particle_n];
+                    t_particle_phi[p]   = c_particle_phi[c_particle_n];
+                    t_particle_m[p]     = c_particle_m[c_particle_n];
+                }
                 c_particle_n++;
             }
             comb_par_tree->Fill();
+            if ( export_thermal ) ther_par_tree->Fill();;
             
             // Cluster Combined Events
             TLorentzVector comb_vector;
@@ -505,12 +539,12 @@ void Jet_Generator_Optimized(
 //    std::cout << "Const. 2 Mean: " << TMath::Mean(10000, const_2_pt_arr) << std::endl;
 //    std::cout << "Const. 3 Mean: " << TMath::Mean(10000, const_3_pt_arr) << "\n" << std::endl;
     
-    
     // Write trees to output file
     pyth_par_tree ->Write("", TObject::kOverwrite);
     pyth_jet_tree ->Write("", TObject::kOverwrite);
     comb_par_tree ->Write("", TObject::kOverwrite);
     comb_jet_tree ->Write("", TObject::kOverwrite);
+    if ( export_thermal ) ther_par_tree ->Write("", TObject::kOverwrite);
     
     std::cout << "Output trees written to." << std::endl;
     
@@ -588,6 +622,7 @@ void Jet_Generator_Optimized(
     int   truth_unmatched_counter = 0;
     int   truth_outside_pt_counter = 0;
     int   truth_outside_y_counter = 0;
+    int   raw_outside_pt_counter = 0;
     float fastjet_match_rad_sq = pow(fastjet_match_radius, 2);
     float background_pt_median[event_count];
     std::cout << "Starting jet matching..." << std::endl;
@@ -646,11 +681,16 @@ void Jet_Generator_Optimized(
                 break;
             }
             
-            // Skips if jet can't be matched to a PYTHIA jet
+            // Skips if jet can't be matched to a PYTHIA jet OR if jet raw is greater than 200 GeV
             if ( c_match < 0 ) {
                 truth_unmatched_counter++;
                 if ( debug) std::cout << "Event: " << e << " Truth Jet: " << k << " has no match found." << std::endl;
                 if ( debug) std::cout << "    p_phi: " << p_jet_phi[k] << ", p_y: " << p_jet_y[k] << std::endl;
+                continue;
+            }
+            // Skips if jet pT_raw is greater than the pax accepted pT_raw
+            if ( c_jet_pt[c_match] > max_pt_raw ) {
+                raw_outside_pt_counter++;
                 continue;
             }
             // Skips if jet pT is outside range
@@ -705,7 +745,7 @@ void Jet_Generator_Optimized(
     }
     
     char truth_match_results[200];
-    snprintf(truth_match_results, 200, "Matched %i jets. %i jets unmatched. %i jets outside pt. %i jets outside y. Unmatched ratio is: %.4f", truth_matched_counter, truth_unmatched_counter, truth_outside_pt_counter, truth_outside_y_counter, float(truth_unmatched_counter)/(truth_matched_counter + truth_unmatched_counter) );
+    snprintf(truth_match_results, 200, "Matched %i jets. %i jets unmatched. %i jets outside pt. %i jets outside y. %i jets with pt_raw above %.0f GeV. Unmatched ratio is: %.4f", truth_matched_counter, truth_unmatched_counter, truth_outside_pt_counter, truth_outside_y_counter, raw_outside_pt_counter, max_pt_raw, float(truth_unmatched_counter)/(truth_matched_counter + truth_unmatched_counter) );
     std::cout << truth_match_results << std::endl;
     
     mlprep_tree->Write("", TObject::kOverwrite);
