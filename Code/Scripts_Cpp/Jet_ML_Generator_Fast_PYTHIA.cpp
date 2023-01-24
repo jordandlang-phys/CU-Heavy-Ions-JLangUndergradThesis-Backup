@@ -9,8 +9,9 @@ using namespace Pythia8;
 #include "TTree.h"
 #include "TLorentzVector.h"
 #include "TF1.h"
+#include "TH1.h"
 #include "TMath.h"
-#include "TRandom.h"
+#include "TRandom3.h"
 #include <cmath>
 #include <iostream>
 #include <filesystem>
@@ -760,88 +761,6 @@ void Jet_Generator_Optimized(
     
     std::cout << "File saved and closed. Function complete!" << std::endl;
 }
-
-
-
-// ----- MACHINE LEARNING FILE PREP ----
-
-
-
-/*
-    Make_Flat_Jet_Distribution()
-    --- WORK IN PROGRESS ---
-    Should flatten a TTree based on the lowest number of jets in a pT range.
-    Need to modify to use random generator to throw out jets
- */
-/*
-void Make_Flat_Jet_Distribution(
-    char  mlprep_file_path[500],        // Full name of ML_Prep root file
-    char  input_tree_name[100],
-    float bin_width,                    // [GeV]
-    float jet_pt_min,
-    float jet_pt_max
-    ) {
-    
-    TFile* file = new TFile(mlprep_file_path, "UPDATE");
-    TTree* input_tree = (TTree*) file->Get(input_tree_name);
-    
-    float jet_pt_true;
-    input_tree->SetBranchAddress("jet_pt_true", &jet_pt_true);
-    
-    char output_tree_name[100];
-    snprintf(output_tree_name, 100, "%s_Flat", input_tree_name);
-    char output_tree_desc[100];
-    snprintf(output_tree_desc, 100, "Flattened version of %s", input_tree_name);
-    TTree* output_tree = input_tree->CloneTree(0);
-    output_tree->SetObject(output_tree_name, output_tree_desc);
-    
-    const int   pt_bins = int(jet_pt_max - jet_pt_min);             // Assumes 1 GeV wide bins
-    const float pt_bin_width = (jet_pt_max - jet_pt_min)/pt_bins;   // Sets bin width
-    int   jet_pt_bin_count[pt_bins] = {0};        // Array of number of jets in each bin
-    float jet_pt_bin_upper[pt_bins];        // Array of upper bound of each array
-    int   bin_skip_array[pt_bins] = {0};    // Array of integers, where every Nth jet in the corresponding array index is skipped to flatten
-    int   bin_counter[pt_bins] = {0};       // Keeps track of the number of jets in each bin
-    
-    // Sets upper bounds for each bin
-    for ( int i = 0 ; i < pt_bins ; i++ ) {
-        jet_pt_bin_upper[i] = i * pt_bin_width + jet_pt_min;
-    }
-    
-    // Counts number of entries in each bin
-    for ( int j = 0 ; j < input_tree->GetEntries() ; j++ ) {
-        input_tree->GetEntry(j);
-        for ( int i = 0 ; i < pt_bins ; i++ ) {
-            if ( jet_pt_true < jet_pt_bin_upper[i] ) {
-                jet_pt_bin_count[i]++;
-                break;
-            }
-        }
-    }
-    
-    // Sets the Nth entry to skip for each bin to flatten the array
-    int min_bin_count = std::min_element(std::begin(jet_pt_bin_count), std::end(jet_pt_bin_count));
-    for ( int i = 0 ; i < pt_bins ; i++ ) {
-        bin_skip_array[i] = int(std::nearbyint( jet_pt_bin_count[i] / (jet_pt_bin_array[i] - min_bin_count) ));
-    }
-    
-    // Copies set number of entries for each bin
-    for ( int j = 0 ; j < input_tree->GetEntries() ; j++ ) {
-        input_tree->GetEntry(j);
-        for ( int i = 0 ; i < pt_bins ; i++ ) {
-            if ( jet_pt_true < jet_pt_bin_upper[i] ) {
-                bin_counter[i]++;
-                if ( bin_counter[i] % bin_skip_array[i] == 0 ) break;
-                output_tree->Fill();
-            }
-        }
-    }
-    
-    output_tree->Write("", TObject::kOverwrite);
-    file->Write("", TObject::kOverwrite);
-    
-    delete output_tree;
-}
-*/
 
 } // Ends the Jet_Generator namespace
 

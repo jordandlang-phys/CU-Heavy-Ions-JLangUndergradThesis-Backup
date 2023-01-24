@@ -23,6 +23,7 @@ int main() {
     std::__fs::filesystem::create_directories(dir_plots);
     
     // Generates jets for training
+    
     Jet_Generator_Optimized(
         "Test",    // output_base_name (Typically just "Train" or "Test")
         dir_data,   // output_directory

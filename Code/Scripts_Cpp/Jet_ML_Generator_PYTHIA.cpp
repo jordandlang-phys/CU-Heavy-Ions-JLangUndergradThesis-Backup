@@ -9,6 +9,7 @@ using namespace Pythia8;
 #include "TTree.h"
 #include "TLorentzVector.h"
 #include "TF1.h"
+#include "TH1.h"
 #include "TMath.h"
 #include "TRandom.h"
 #include <cmath>
