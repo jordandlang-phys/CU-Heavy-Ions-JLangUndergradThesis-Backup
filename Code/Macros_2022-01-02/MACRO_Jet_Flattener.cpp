@@ -9,6 +9,6 @@ void MACRO_Jet_Flattener() {
         80,     // n_bins
         10.,    // jet_pt_min
         90.,    // jet_pt_max
-        100     // min_bin_n
+        2500   // min_bin_n
     );
 }

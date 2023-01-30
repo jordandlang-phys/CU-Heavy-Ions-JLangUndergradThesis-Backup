@@ -28,19 +28,19 @@ namespace Jet_Generator {
 
 
 // Fit functions for thermal generator:
-double Func_Gaussian(double *x,double *par) {
+double Func_Gaussian(double* x, double* par) {
     double arg = 0;
     if (par[2]!=0) arg = (x[0] - par[1])/par[2];
     double fitval = par[0]*TMath::Exp(-0.5*arg*arg);
     return fitval;
 }
-double Func_Power(double *x,double *par) {
+double Func_Power(double* x, double* par) {
     double arg = 0;
     if (par[2]!=0) arg = (x[0] - par[2]);
     double fitval = par[0] * pow(arg, par[1]);
     return fitval;
 }
-double Func_Flat(double *x,double *par) {
+double Func_Flat(double* x, double* par) {
     double fitval = par[0] * 1;
     return fitval;
 }
@@ -93,13 +93,13 @@ void Jet_Generator_Optimized(
     const int   thermal_sigma = d_thermal_sigma,        // Standard deviation for number of thermal particles
     const float pythia_beampower = d_beam_power,        // [GeV] Simulated beam power in the dector. Default defined by jet_ml_constants.h file.
     const float detector_eta = d_detector_eta,          // Maximum rapidity of the detector. Default defined by jet_ml_constants.h file.
-    const float max_pt_raw = 200.,                  // Max raw jet pT to accept
-    const bool  export_thermal = false,             // If true, exports thermal particles to root file
+    const float jet_pt_raw_max = d_jet_pt_raw_max,      // Max raw jet pT to accept
+    const bool  export_thermal = false,                 // If true, exports thermal particles to root file
+    const float thermal_pt_max = d_thermal_pt_max,      // Max thermal pT (typically twice the thermal mean)
     const float thermal_MH_par_1 = d_MH_par_1,          // Modified Hagedorn function parameter 1
     const float thermal_MH_par_2 = d_MH_par_2,          // Modified Hagedorn function parameter 2
     const float thermal_MH_par_3 = d_MH_par_3,          // Modified Hagedorn function parameter 3
-    const float thermal_MH_par_4 = d_MH_par_4,          // Modified Hagedorn function parameter 4
-    const float thermal_pt_max = d_thermal_pt_max       // Max thermal pT (typically twice the thermal mean)
+    const float thermal_MH_par_4 = d_MH_par_4           // Modified Hagedorn function parameter 4
     ) {
     
     std::cout << "\nStarting Full_Jet_Generator()...\n" << std::endl;
@@ -165,7 +165,7 @@ void Jet_Generator_Optimized(
     gen_param_tree->Branch("thermal_MH_par_3",      &gen_thermal_MH_par_3);
     gen_param_tree->Branch("thermal_MH_par_4",      &gen_thermal_MH_par_4);
     gen_param_tree->Branch("ml_soft_jet_index",     &gen_ml_soft_jet_index);
-    gen_param_tree->Branch("max_pt_raw",            &gen_max_pt_raw);
+    gen_param_tree->Branch("jet_pt_raw_max",            &gen_max_pt_raw);
     
     float thermal_norm = 1 / sqrt(2 * math_pi * pow(thermal_sigma,2)); // Sets normalization factor for gaussian
     std::cout << "Thermal Norm: " << thermal_norm << std::endl;
@@ -191,7 +191,7 @@ void Jet_Generator_Optimized(
     gen_thermal_pt_max      = thermal_pt_max;
     gen_fastjet_accept_index= fastjet_accept_index;
     gen_ml_soft_jet_index   = ml_soft_jet_index;
-    gen_max_pt_raw          = max_pt_raw;
+    gen_max_pt_raw          = jet_pt_raw_max;
     
     gen_param_tree->Fill();
     gen_param_tree->Write("", TObject::kOverwrite);
@@ -199,15 +199,23 @@ void Jet_Generator_Optimized(
     
     std::cout << "Generator_Parameters tree built and written to." << std::endl;
     
+    // Maximum number of particles and jets
+    const int p_par_max = 1000;
+    const int t_par_max = int( thermal_mean + 5 * thermal_sigma );
+    const int c_par_max = p_par_max + t_par_max;
+    const int p_jet_max = 50;
+    const int c_jet_max = 100;
+    // Number of constituent particles has to be hard coded (or switch to using vectors)
+    
     // PYTHIA Particle Tree (pyth_par_tree)
     // This TTree stores PYTHIA particle information
     // DO NOT USE DOUBLES! Must hard-code numbers for maximum compatibility
     int     p_particle_n;           // particle index
-    float   p_particle_pt[200];     // transverse momentum
-    float   p_particle_phi[200];    // azimuthal angle
-    float   p_particle_eta[200];    // pseudorapidity
-    float   p_particle_m[200];      // particle mass
-    int     p_particle_pid[200];    // numerical code for particle type
+    float   p_particle_pt[p_par_max];     // transverse momentum
+    float   p_particle_phi[p_par_max];    // azimuthal angle
+    float   p_particle_eta[p_par_max];    // pseudorapidity
+    float   p_particle_m[p_par_max];      // particle mass
+    int     p_particle_pid[p_par_max];    // numerical code for particle type
     
     pyth_par_tree->Branch("particle_n",     &p_particle_n);
     pyth_par_tree->Branch("particle_pt",    p_particle_pt,    "particle_pt[particle_n]/F");
@@ -221,16 +229,16 @@ void Jet_Generator_Optimized(
     // PYTHIA Jet Tree (pyth_jet_tree)
     // This TTree stores PYTHIA jet information
     int     p_jet_n;
-    float   p_jet_pt[100];
-    float   p_jet_y[100];
-    float   p_jet_phi[100];
-    float   p_jet_mass[100];
-    float   p_jet_area[100];
-    float   p_jet_area_err[100];
-    int     p_jet_const_n[100];
-    float   p_jet_const_pt[100][400];
-    float   p_jet_const_eta[100][400];
-    float   p_jet_const_phi[100][400];
+    float   p_jet_pt[p_jet_max];
+    float   p_jet_y[p_jet_max];
+    float   p_jet_phi[p_jet_max];
+    float   p_jet_mass[p_jet_max];
+    float   p_jet_area[p_jet_max];
+    float   p_jet_area_err[p_jet_max];
+    int     p_jet_const_n[p_jet_max];
+    float   p_jet_const_pt[p_jet_max][400];
+    float   p_jet_const_eta[p_jet_max][400];
+    float   p_jet_const_phi[p_jet_max][400];
     
     pyth_jet_tree->Branch("jet_n",          &p_jet_n);
     pyth_jet_tree->Branch("jet_pt",         p_jet_pt,         "jet_pt[jet_n]/F");
@@ -250,10 +258,10 @@ void Jet_Generator_Optimized(
     // Thermal Particle Tree (ther_par_tree)
     // This TTree stores both thermal background particle information
     int     t_particle_n;           // particle index
-    float   t_particle_pt[3800];     // transverse momentum
-    float   t_particle_phi[3800];    // azimuthal angle
-    float   t_particle_eta[3800];    // pseudorapidity
-    float   t_particle_m[3800];      // particle mass
+    float   t_particle_pt[t_par_max];     // transverse momentum
+    float   t_particle_phi[t_par_max];    // azimuthal angle
+    float   t_particle_eta[t_par_max];    // pseudorapidity
+    float   t_particle_m[t_par_max];      // particle mass
     
     if ( export_thermal ) {
         ther_par_tree = new TTree("Thermal_Particle_Tree", "Tree of particles from thermal toy model");
@@ -268,11 +276,11 @@ void Jet_Generator_Optimized(
     // Combined Particle Tree (comb_par_tree)
     // This TTree stores both PYTHIA and thermal background particle information
     int   c_particle_n;             // number of total particles in event
-    float c_particle_pt[4000];      // transverse momentum
-    float c_particle_phi[4000];     // azimuthal angle
-    float c_particle_eta[4000];     // pseudorapidity
-    float c_particle_m[4000];       // particle mass
-    int   c_particle_source[4000];  // source of particles (0 = PYTHIA, 1 = Thermal)
+    float c_particle_pt[c_par_max];      // transverse momentum
+    float c_particle_phi[c_par_max];     // azimuthal angle
+    float c_particle_eta[c_par_max];     // pseudorapidity
+    float c_particle_m[c_par_max];       // particle mass
+    int   c_particle_source[c_par_max];  // source of particles (0 = PYTHIA, 1 = Thermal)
     
     comb_par_tree->Branch("particle_n",     &c_particle_n);
     comb_par_tree->Branch("particle_pt",    c_particle_pt,     "particle_pt[particle_n]/F");
@@ -286,16 +294,16 @@ void Jet_Generator_Optimized(
     // Combined Jet Tree (comb_jet_tree)
     // This TTree stores combined event jet information
     int     c_jet_n;
-    float   c_jet_pt[100];
-    float   c_jet_y[100];
-    float   c_jet_phi[100];
-    float   c_jet_mass[100];
-    float   c_jet_area[100];
-    float   c_jet_area_err[100];
-    int     c_jet_const_n[100];
-    float   c_jet_const_pt[100][400];
-    float   c_jet_const_eta[100][400];
-    float   c_jet_const_phi[100][400];
+    float   c_jet_pt[c_jet_max];
+    float   c_jet_y[c_jet_max];
+    float   c_jet_phi[c_jet_max];
+    float   c_jet_mass[c_jet_max];
+    float   c_jet_area[c_jet_max];
+    float   c_jet_area_err[c_jet_max];
+    int     c_jet_const_n[c_jet_max];
+    float   c_jet_const_pt[c_jet_max][400];
+    float   c_jet_const_eta[c_jet_max][400];
+    float   c_jet_const_phi[c_jet_max][400];
     
     comb_jet_tree->Branch("jet_n",          &c_jet_n);
     comb_jet_tree->Branch("jet_pt",         c_jet_pt,         "jet_pt[jet_n]/F");
@@ -333,8 +341,8 @@ void Jet_Generator_Optimized(
     
     // Thermal Background Setup
     // This initializes the distribution functions for thermal particles
-    TF1* thermal_n_func   = new TF1("thermal_n_func",   Func_Gaussian, 0, 2 * thermal_mean, 3);
-    TF1* thermal_pt_func  = new TF1("thermal_pt_func",  Func_ModifiedHagedorn, 0, 100, 4);
+    TF1* thermal_n_func   = new TF1("thermal_n_func",   Func_Gaussian, 0, t_par_max, 3);
+    TF1* thermal_pt_func  = new TF1("thermal_pt_func",  Func_ModifiedHagedorn, 0, thermal_pt_max, 4);
     TF1* thermal_eta_func = new TF1("thermal_eta_func", Func_Flat, -detector_eta, detector_eta, 1);
     TF1* thermal_phi_func = new TF1("thermal_phi_func", Func_Flat, -math_pi, math_pi, 1);
     thermal_n_func   ->SetParameters(thermal_norm, thermal_mean, thermal_sigma);
@@ -369,6 +377,7 @@ void Jet_Generator_Optimized(
     
     // Generate Events
     // Loop to generate PYTHIA events. Skip if error.
+    int const_arr_size = sizeof(float) * 400;
     int e = 0;
     while ( e < event_count ) {
         // ----- PYTHIA -----
@@ -400,6 +409,11 @@ void Jet_Generator_Optimized(
         }
         fastjet::ClusterSequenceArea p_jet_clusters( pyth_particles, jet_definition, area_definition );
         std::vector<fastjet::PseudoJet> p_jet_list = sorted_by_pt( p_jet_clusters.inclusive_jets(fastjet_pt_min) );
+        
+//        std::cout << "Event: " << e << " -----" << std::endl;
+//        for (int z = 0 ; z < p_jet_list.size() ; z++ ) {
+//            std::cout << "Jet: " << z << ", pT: " << p_jet_list[z].pt() << std::endl;
+//        }
         
         // Checks jets to see if the event should be accepted
         p_jet_n = p_jet_list.size();
@@ -439,14 +453,19 @@ void Jet_Generator_Optimized(
             
             // Add PYTHIA Jets
             for ( int j = 0 ; j < p_jet_n ; j++ ) {
+                // Add jet data
                 p_jet_pt[j]         = p_jet_list[j].pt();
                 p_jet_y[j]          = p_jet_list[j].rap();
                 p_jet_phi[j]        = p_jet_list[j].phi();
                 p_jet_mass[j]       = p_jet_list[j].m();
                 p_jet_area[j]       = p_jet_list[j].area();
                 p_jet_area_err[j]   = p_jet_list[j].area_error();
-                std::vector<fastjet::PseudoJet> p_jet_constituents = p_jet_list[j].constituents();
+                std::vector<fastjet::PseudoJet> p_jet_constituents = sorted_by_pt(p_jet_list[j].constituents());
                 p_jet_const_n[j]    = p_jet_constituents.size();
+                // Zero out constituent array and add constituent data
+                memset(p_jet_const_pt[j], 0, const_arr_size);
+                memset(p_jet_const_eta[j], 0, const_arr_size);
+                memset(p_jet_const_phi[j], 0, const_arr_size);
                 for ( int p = 0 ; p < p_jet_const_n[j] ; p++) {
                     p_jet_const_pt[j][p]    = p_jet_constituents[p].pt();
                     p_jet_const_eta[j][p]   = p_jet_constituents[p].eta();
@@ -499,14 +518,23 @@ void Jet_Generator_Optimized(
             c_jet_n = c_jet_list.size();
             if ( c_jet_n >= 100 ) c_jet_n = 100; // Limits to top 100 jets (this should never happen)
             for ( int j = 0 ; j < c_jet_n ; j++ ) {
+                // Add jet data
                 c_jet_pt[j]         = c_jet_list[j].pt();
                 c_jet_y[j]          = c_jet_list[j].rap();
                 c_jet_phi[j]        = c_jet_list[j].phi();
                 c_jet_mass[j]       = c_jet_list[j].m();
                 c_jet_area[j]       = c_jet_list[j].area();
                 c_jet_area_err[j]   = c_jet_list[j].area_error();
-                std::vector<fastjet::PseudoJet> c_jet_constituents = c_jet_list[j].constituents();
+                std::vector<fastjet::PseudoJet> c_jet_constituents = sorted_by_pt(c_jet_list[j].constituents());
+//                std::cout << "Event: " << e << " Jet: " << j << " with " << c_jet_constituents.size() << " constituents -----" << std::endl;
+//                for (int z = 0 ; z < c_jet_constituents.size() ; z++ ) {
+//                    std::cout << "Const: " << z << ", pT: " << c_jet_constituents[z].pt() << std::endl;
+//                }
                 c_jet_const_n[j]    = c_jet_constituents.size();
+                // Zero out constituent array and add constituent data
+                memset(c_jet_const_pt[j], 0, const_arr_size);
+                memset(c_jet_const_eta[j], 0, const_arr_size);
+                memset(c_jet_const_phi[j], 0, const_arr_size);
                 for ( int p = 0 ; p < c_jet_const_n[j] ; p++) {
                     c_jet_const_pt[j][p]   = c_jet_constituents[p].pt();
                     c_jet_const_eta[j][p]  = c_jet_constituents[p].eta();
@@ -690,7 +718,7 @@ void Jet_Generator_Optimized(
                 continue;
             }
             // Skips if jet pT_raw is greater than the pax accepted pT_raw
-            if ( c_jet_pt[c_match] > max_pt_raw ) {
+            if ( c_jet_pt[c_match] > jet_pt_raw_max ) {
                 raw_outside_pt_counter++;
                 continue;
             }
@@ -746,7 +774,7 @@ void Jet_Generator_Optimized(
     }
     
     char truth_match_results[200];
-    snprintf(truth_match_results, 200, "Matched %i jets. %i jets unmatched. %i jets outside pt. %i jets outside y. %i jets with pt_raw above %.0f GeV. Unmatched ratio is: %.4f", truth_matched_counter, truth_unmatched_counter, truth_outside_pt_counter, truth_outside_y_counter, raw_outside_pt_counter, max_pt_raw, float(truth_unmatched_counter)/(truth_matched_counter + truth_unmatched_counter) );
+    snprintf(truth_match_results, 200, "Matched %i jets. %i jets unmatched. %i jets outside pt. %i jets outside y. %i jets with pt_raw above %.0f GeV. Unmatched ratio is: %.4f", truth_matched_counter, truth_unmatched_counter, truth_outside_pt_counter, truth_outside_y_counter, raw_outside_pt_counter, jet_pt_raw_max, float(truth_unmatched_counter)/(truth_matched_counter + truth_unmatched_counter) );
     std::cout << truth_match_results << std::endl;
     
     mlprep_tree->Write("", TObject::kOverwrite);

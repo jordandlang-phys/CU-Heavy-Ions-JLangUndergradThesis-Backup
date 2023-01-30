@@ -10,6 +10,7 @@ void MACRO_File_Comparison_Plotter_GenCombinedJetData() {
     
     char file_A_path[400];
     snprintf(file_A_path, 400, "../../Files/Comparison_Test_4/Data/Full_Train_B8_10_90_N500000.root");
+//    snprintf(file_A_path, 400, "../../Files/Comparison_Test_4/Data/Full_Demo_B8_10_90_N10000.root");
     char tree_A_name[100];
     snprintf(tree_A_name, 100, "PYTHIA_Jet_Tree");
     char file_A_label[100];
@@ -21,7 +22,8 @@ void MACRO_File_Comparison_Plotter_GenCombinedJetData() {
         };
         
     char file_B_path[400];
-    snprintf(file_B_path, 400, "../../Files/Joey_Data/Data/Pyth_10_90_Train_Trees8.root");
+//    snprintf(file_B_path, 400, "../../Files/Joey_Data/Data/Pyth_10_90_Train_Trees8.root");
+    snprintf(file_B_path, 400, "../../../Jet_Reco_Joey/CU-Heavy-Ions-Jet-Reco-ML/Data/Pyth_10_90_Train_Trees8.root");
     char tree_B_name[100];
     snprintf(tree_B_name, 100, "FastJet_Tree");
     char file_B_label[100];
@@ -33,14 +35,14 @@ void MACRO_File_Comparison_Plotter_GenCombinedJetData() {
         };
     
     int branch_bins[num_bins] = {
+        30, 50, 50, 50,
         50, 50, 50, 50,
-        50, 50, 50, 50,
-        50, 50
+        51, 50
         };
     float branch_range[num_bins][2] = {
-        {0., 50.},      {0., 200.},     {-1., 1.},      {0, 6.4},
-        {-5., 95.},     {0., 1.},       {0., 3000.},    {0., 50.},
-        {-1., 1.},      {0, 6.4}
+        {0., 30.},      {0., 200.},     {-1., 1.},      {0., 6.4},
+        {-5., 95.},     {0., 1.},       {0., 100.},     {0., 50.},
+        {-1., 1.},      {0., 6.4}
         };
     char branch_x_units[num_bins][50] = {
         "N_{jets}",             "p_{T} [GeV/c^{2}]",    "rapidity",             "azuimuthal angle",

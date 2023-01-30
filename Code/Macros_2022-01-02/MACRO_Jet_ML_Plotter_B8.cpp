@@ -6,7 +6,9 @@ using namespace Jet_Plotter;
 void MACRO_Jet_ML_Plotter_B8() {
     
     char dir_master[200];
-    sprintf(dir_master, "../../Files/Comparison_Test_4");
+//    sprintf(dir_master, "../../Files/Comparison_Test_4");
+    sprintf(dir_master, "../../../Jet_Reco_Joey/CU-Heavy-Ions-Jet-Reco-ML/");
+    
     
     char dir_data[200];
     sprintf(dir_data, "%s/Data", dir_master);
@@ -24,22 +26,23 @@ void MACRO_Jet_ML_Plotter_B8() {
         {"ML_Results/Test_4GeV_Bins/Train_B8_F12_10_90_LR_Coeffs.csv", "Train_B8_F12_10_90"}
     };
 
-    char ml_results_array[7][2][100] = {
+    char ml_results_array[8][2][100] = {
         {"ML_Results/Test_4GeV_Bins/Train_B8_F12_10_90_Test_18_22.csv", "Tree_Train_B8_F12_10_90_Test_18_22"},
         {"ML_Results/Test_4GeV_Bins/Train_B8_F12_10_90_Test_28_32.csv", "Tree_Train_B8_F12_10_90_Test_28_32"},
         {"ML_Results/Test_4GeV_Bins/Train_B8_F12_10_90_Test_38_42.csv", "Tree_Train_B8_F12_10_90_Test_38_42"},
         {"ML_Results/Test_4GeV_Bins/Train_B8_F12_10_90_Test_48_52.csv", "Tree_Train_B8_F12_10_90_Test_48_52"},
         {"ML_Results/Test_4GeV_Bins/Train_B8_F12_10_90_Test_58_62.csv", "Tree_Train_B8_F12_10_90_Test_58_62"},
         {"ML_Results/Test_4GeV_Bins/Train_B8_F12_10_90_Test_68_72.csv", "Tree_Train_B8_F12_10_90_Test_68_72"},
-        {"ML_Results/Test_4GeV_Bins/Train_B8_F12_10_90_Test_78_82.csv", "Tree_Train_B8_F12_10_90_Test_78_82"}
+        {"ML_Results/Test_4GeV_Bins/Train_B8_F12_10_90_Test_78_82.csv", "Tree_Train_B8_F12_10_90_Test_78_82"},
+        {"ML_Results/Test_4GeV_Bins/Train_B8_F12_10_90_Test_40_60.csv", "Tree_Train_B8_F12_10_90_Test_40_60"}
     };
 
-    float test_min_max_array[7][2] = {
-        {18., 22.}, {28., 32.}, {38., 42.}, {48., 52.}, {58., 62.}, {68., 72.}, {78., 82.}
+    float test_min_max_array[8][2] = {
+        {18., 22.}, {28., 32.}, {38., 42.}, {48., 52.}, {58., 62.}, {68., 72.}, {78., 82.}, {40., 60.}
     };
     
     // Converts ML estimator feature weights into a TTree
-    for ( int i = 0 ; i < 7 ; i++ ) {
+    for ( int i = 0 ; i < 8 ; i++ ) {
         Build_Weights_TTree_FromCSV(
             dir_data,
             ml_weights_array[i][0],
@@ -49,7 +52,7 @@ void MACRO_Jet_ML_Plotter_B8() {
     }
 
     // Converts ML results into a TTree
-    for ( int i = 0 ; i < 7 ; i++ ) {
+    for ( int i = 0 ; i < 8 ; i++ ) {
         Build_Results_TTree_FromCSV(
             dir_data,
             ml_results_array[i][0],
@@ -59,7 +62,7 @@ void MACRO_Jet_ML_Plotter_B8() {
     }
 
     // Iterates through ML results to output plots
-    for ( int i = 0 ; i < 7 ; i++ ) {
+    for ( int i = 0 ; i < 8 ; i++ ) {
 
         char input_file_name[300];
         sprintf(

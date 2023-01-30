@@ -10,8 +10,10 @@ void MACRO_File_Comparison_Plotter_MLPrepData() {
     
     char file_A_path[400];
     snprintf(file_A_path, 400, "../../Files/Comparison_Test_4/Data/Full_Train_B8_10_90_N500000_ML_Prep.root");
+//    snprintf(file_A_path, 400, "../../Files/Comparison_Test_4/Data/Full_Demo_B8_10_90_N10000_ML_Prep.root");
     char tree_A_name[100];
     snprintf(tree_A_name, 100, "ML_Train_B8_10_90_N500000");
+//    snprintf(tree_A_name, 100, "ML_Demo_B8_10_90_N10000");
     char file_A_label[100];
     snprintf(file_A_label, 100, "Jordan's Data");
     char tree_A_branches[num_bins][50] = {
@@ -24,7 +26,8 @@ void MACRO_File_Comparison_Plotter_MLPrepData() {
         };
         
     char file_B_path[400];
-    snprintf(file_B_path, 400, "../../Files/Joey_Data/Data/ML_Prep_10_90_Train8.root");
+//    snprintf(file_B_path, 400, "../../Files/Joey_Data/Data/ML_Prep_10_90_Train8.root");
+    snprintf(file_B_path, 400, "../../../Jet_Reco_Joey/CU-Heavy-Ions-Jet-Reco-ML/Data/ML_Prep_10_90_Train8.root");
     char tree_B_name[100];
     snprintf(tree_B_name, 100, "Tree_Tree");
     char file_B_label[100];

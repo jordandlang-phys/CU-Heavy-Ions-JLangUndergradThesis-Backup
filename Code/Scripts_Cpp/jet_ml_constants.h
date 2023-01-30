@@ -23,7 +23,7 @@ const int   d_accept_jet_index      = 0;        // If =0, accepts events with an
 // Thermal Default Values
 const int   d_thermal_mean          = 1800;     // Mean number of thermal particles
 const int   d_thermal_sigma         = 200;      // Standard deviation for number of thermal particles
-const float d_thermal_pt_max        = 100;      // Max pT of a thermal particle (should be adjusted based on pT distribution)
+const float d_thermal_pt_max        = 100;      // Max pT of a thermal particle (adjust based on pT distribution)
 const float d_MH_par_1              = 64547;    // Modified Hagedorn function, parameter 1
 const float d_MH_par_2              = 3.076;    // Modified Hagedorn function, parameter 2
 const float d_MH_par_3              = 1.126;    // Modified Hagedorn function, parameter 3
@@ -36,6 +36,7 @@ const float d_pt_hat_max            = 0.;       // [GeV] ptHatMax value. If 0. t
 const float d_fastjet_pt_min        = 8.0;      // [GeV] Minimum pT considered by FastJet for a jet.
 const float d_fastjet_radius        = 0.4;      // Jet radius used by FastJet.
 const float d_fastjet_match_radius  = 0.3;      // Matches combined jets to PYTHIA jets within this radius.
+const float d_jet_pt_raw_max        = 200.;     // [GeV] Maximum raw jet pt allowed
 
 // ML Prep Default Values
 const int   d_softest_jet_index     = 0;        // If =0, tries to match with all PYTHIA jets. If >0, matches only to top N PYTHIA jets.
