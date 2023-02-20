@@ -5,26 +5,46 @@ using namespace Jet_Plotter;
 
 void MACRO_Jet_ML_Plotter_B8() {
     
-    char dir_master[200];
-//    sprintf(dir_master, "../../Files/Comparison_Test_4");
-    sprintf(dir_master, "../../../Jet_Reco_Joey/CU-Heavy-Ions-Jet-Reco-ML/");
+    string dir_master   = "../../Files/Comparison_Test_4/";
+    string dir_data     = dir_master + "Data/";
+    string dir_plots    = dir_plots + "Plots/";
     
+    string train_ptbias     = "B8";
+    string train_features   = "F12";
+    string train_ptmin      = "10";
+    string train_ptmax      = "90";
+    string train_name_base  = "Train_" + train_ptbias + "_" + train_features + "_" + train_ptmin + "_" + train_ptmax;
     
-    char dir_data[200];
-    sprintf(dir_data, "%s/Data", dir_master);
+    string dir_ml           = "ML_Results_LR_Only/";
+    string dir_train        = "";
+    string dir_feature      = "12_Feature/";
     
-    char dir_plots[200];
-    sprintf(dir_plots, "%s/Plots", dir_master);
+    string dir_test_4gev    = "Test_4GeV_Bins/";
+    string dir_train_20gev  = "Train_20GeV_Bins/";
+    string dir_train_30gev  = "Train_30GeV_Bins/";
     
-    char output_file_name[100];
-    sprintf(output_file_name, "ML_Results/Test_4GeV_Bins/Train_B8_F12_10_90.root");
+    string output_file_name = train_name_base + ".root";
+    string output_file_path = output_file_path + dir_ml + dir_train + dir_feature + dir_test_4gev + output_file_name;
     
-    char output_file_path[200];
-    sprintf(output_file_path, "%s/%s", dir_data, output_file_name);
+    string lr_coeffs_csv    = train_name_base + "_LR_Coeffs.csv";
+    string lr_coeffs_tree   = train_name_base + "_LR_Coeffs";
     
-    char ml_weights_array[1][2][100] = {
-        {"ML_Results/Test_4GeV_Bins/Train_B8_F12_10_90_LR_Coeffs.csv", "Train_B8_F12_10_90"}
+    string rf_coeffs_csv    = train_name_base + "_RF_Coeffs.csv";
+    string rf_coeffs_tree   = train_name_base + "_RF_Coeffs";
+    
+    string* test_min_max_array[7][2] = {
+        {"18","22"}, {"28","32"}, {"38","42"}, {"48","52"}, {"58","62"}, {"68","72"}, {"78","82"}
     };
+    
+    for ( int i = 0 ; i < 7 ; i++ ) {
+        string input_base_str = train_name_base + "_Test_" + test_min_max_array[i][0] + test_min_max_array[i][0];
+        string input_csv_str  = dir_ml + dir_train + dir_feature + dir_test_4gev + input_base_str + ".csv";
+        string input_tree_str =
+    }
+    
+//    char ml_weights_array[1][2][100] = {
+//        {"ML_Results/Test_4GeV_Bins/Train_B8_F12_10_90_LR_Coeffs.csv", "Train_B8_F12_10_90"}
+//    };
 
     char ml_results_array[8][2][100] = {
         {"ML_Results/Test_4GeV_Bins/Train_B8_F12_10_90_Test_18_22.csv", "Tree_Train_B8_F12_10_90_Test_18_22"},

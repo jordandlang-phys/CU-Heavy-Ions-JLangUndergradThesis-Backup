@@ -1,3 +1,4 @@
+from os import (path, mkdir)
 import sklearn
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
@@ -5,13 +6,13 @@ from sklearn.metrics import accuracy_score
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neural_network import MLPRegressor
-import numpy as np
 from statistics import mean, median
+from array import array
+from datetime import datetime
+import numpy as np
 import math
-from array import array
-from os import path
-from array import array
 import csv
+
 
 
 
@@ -69,6 +70,29 @@ def Build_FeatureArrays_FromCSV(
 
 
 
+def Build_SelectFeatureArray(
+    X_features,
+    feature_index
+    ) :
+    """
+    Builds training and testing data sets
+    """
+    
+    print("Selecting data from master array...")
+    
+    X_features_select = []
+    for i in range(len(X_features)):
+        X_temp = []
+        for j in range(len(feature_index)):
+            X_temp.append(X_features[i][feature_index[j]])
+        X_features_select.append(X_temp)
+        
+    print("Data ready. Feature array length:", len(X_features_select), "\n")
+    
+    return X_features_select
+
+
+
 def Write_MLResults_ToCSV(
     output_filename,  # File path with name (MUST include '.csv' at end)
     pt_true_array,    # Array of pt_true values (probably 'y_test' array)
@@ -86,6 +110,12 @@ def Write_MLResults_ToCSV(
     
     # Build and write header
     csv_header = ['jet_pt_true', 'jet_pt_reco']
+    no_pt_corr = False
+    
+    if ( 'jet_pt_corr' not in feature_label ):
+        csv_header.append('jet_pt_corr')
+        no_pt_corr = True
+    
     for label in feature_label:
         csv_header.append(label)
     csv_writer.writerow(csv_header)
@@ -93,6 +123,8 @@ def Write_MLResults_ToCSV(
     # Add data
     for i in range(len(pt_true_array)):
         csv_row = [pt_true_array[i], pt_reco_array[i]]
+        if no_pt_corr:
+            csv_row.append(pt_sc_array[i])
         for feature in feature_array[i]:
             csv_row.append(feature)
         csv_writer.writerow(csv_row)
@@ -103,14 +135,15 @@ def Write_MLResults_ToCSV(
     return
 
 
-def Write_MLWeights_ToCSV(
+def Write_MLCoefficients_ToCSV(
     output_filename,  # File path with name (MUST include '.csv' at end)
-    weight_array,     # Array of feature weight values (probably 'lr_coeffs' or 'rf_importance')
+    coeff_array,      # Array of feature weight values (probably 'lr_coeffs' or 'rf_importance')
     feature_label     # Array of feature labels
     ) :
     """
     Writes ML results to a csv file
     """
+    print("Writing coefficients to CSV...")
     # Create csv file
     output_csv  = open(output_filename, 'w', newline='')
     csv_writer  = csv.writer(output_csv)
@@ -123,22 +156,22 @@ def Write_MLWeights_ToCSV(
     
     # Add data
     csv_row = []
-    for weight in weight_array:
-        csv_row.append(weight)
+    for coeff in coeff_array:
+        csv_row.append(coeff)
     csv_writer.writerow(csv_row)
         
     output_csv.close()
-    print("ML weights .csv file closed.")
+    print("Coefficient CSV file complete.")
     
     return
 
 
 
 def Train_LinearRegression(
-    X_train,                     # Array of array of input features
-    y_train,                     # Array of target values
-    features_labels,             # Array of string labels for each feature
-    use_scaler = True    # If True, uses StandardScalar
+    X_train,            # Array of array of input features
+    y_train,            # Array of target values
+    features_labels,    # Array of string labels for each feature
+    use_scaler = True   # If True, uses StandardScalar
     ):
     print("\n----- Fitting Linear Regression Estimator -----\n")
     
@@ -173,7 +206,6 @@ def Train_LinearRegression(
     for i in range(len(lr_coeffs)) :
         print(features_labels[i], lr_coeffs[i])
     
-        
     print(type(lr_pipeline))
     
     return lr_pipeline, lr_coeffs
@@ -181,10 +213,10 @@ def Train_LinearRegression(
 
 
 def Train_RandomForestRegression(
-    X_train,                     # Array of array of input features
-    y_train,                     # Array of target values
-    features_labels,             # Array of string labels for each feature
-    use_scaler = True    # If True, uses StandardScalar
+    X_train,            # Array of array of input features
+    y_train,            # Array of target values
+    features_labels,    # Array of string labels for each feature
+    use_scaler = True   # If True, uses StandardScalar
     ):
     print("\n----- Fitting Random Forest Regression Estimator -----\n")    
     
@@ -201,14 +233,13 @@ def Train_RandomForestRegression(
     rf_pipeline = make_pipeline(
         scaler,
         rf_estimator )
-    rf_features = 0
 
     # Fits the regression model
     output = rf_pipeline.fit(X_train, y_train)
     print("\nRandom Tree Regression Fit:\n", output)
 
     # Outputs feature importances
-    rf_features_arr = rf_estimator.feature_importances_
+    rf_features = rf_estimator.feature_importances_
 
     print("Feature Importance:")
     for i in range(len(rf_features)) :
@@ -332,6 +363,51 @@ def Test_Estimator(
 
     
 
+def TestAndSave_Estimator(
+    feature_label,      # Array of labels corresponding to each feature
+    feature_index,      # Array of indices for each feature used in X_train
+    ml_pipeline,        # Trained Machine Learning Regression Pipeline
+    X_test_select,      # Array of testing data features
+    y_test,             # Array of testing data targets
+    sc_test,            # Array of testing data simple corrections
+    pt_test_min,        # Float of min pT to test with
+    pt_test_max,        # Float of max pT to test with
+    output_filename,    # Directory path + name for output csv file
+    use_scaler = True   # If true, rescales data
+    ) :
+    
+    X_test_temp  = []
+    y_test_temp  = []
+    sc_test_temp = []
+    
+    for i in range(len(y_test)):
+        if y_test[i] > pt_test_min and y_test[i] < pt_test_max:
+            X_test_temp.append(X_test_select[i])
+            y_test_temp.append(y_test[i])
+            sc_test_temp.append(sc_test[i])
+        else: continue
+    
+    # Tests estimator
+    ml_results, ml_results_delta = Test_Estimator(
+        ml_pipeline,
+        X_test_temp,
+        y_test_temp
+        )
+    
+    # Writes outputs to a csv file
+    Write_MLResults_ToCSV(
+        output_filename,
+        y_test_temp,
+        sc_test_temp,
+        ml_results,
+        X_test_temp,
+        feature_label
+        )
+    
+    return
+
+
+
 def Test_All_Estimators(
     X_test,          # Array of arrays of input features
     y_test,          # Array of pT truth values for comparison
@@ -373,3 +449,308 @@ def Test_All_Estimators(
         mlp_results, mlp_results_delta = Test_Estimator(mlp_pipeline, X_test, y_test)
     
     return lr_results, lr_results_delta, rf_results, rf_results_delta, mlp_results, mlp_results_delta
+
+
+
+def Full_TrainTest(
+    train_file_bundle,  # Array of tuples of train files:       [(0:"File_Name.csv", 1:"Base_Name", 2:"Bias")]
+    test_file_bundle,   # Array of tuples of test files:        [(0:"File_Name.csv", 1:"Base_Name", 2:"Bias")]
+    feature_bundle,     # Array of tuples of feature labels:    [(0:feature_label_arr, 1:feature_index_arr)]
+    test_bin_array,     # Array of tuples of test bin min/max:  [("Test_Bin_Set_Label", ((test_pt_min, test_pt_min),...))]
+    traintest_bin_array, # Array of tuples to train and test over the same range:  [("Bin_Set_Label",  ((traintest_pt_min, traintest_pt_max),...))]. If traintest_bin_array = None, skips this step of the function
+    output_directory,   # Output directory. Subfolders will be created accordingly
+    train_pt_min,
+    train_pt_max,
+    use_lr  = True,     # Use linear regression. Defaults to True since LR is fast
+    use_rf  = False,    # Use random forest regression. Defaults to False since RF is slow
+    use_mlp = False,    # Use multi-layer perceptron regression. Defaults to False since MLP is slow
+    ) :
+    """
+    """
+    
+    # Tries to makes the output directory if it doesn't exist yet
+    try:
+        mkdir(output_directory)
+        print("Made:", output_directory)
+    except:
+        print("Directory already exists:", output_directory)
+    
+    # Loops over each training file
+    for train_file_info in train_file_bundle:
+        train_csv_path = train_file_info[0]
+        X_train, y_train, sc_train = Build_FeatureArrays_FromCSV(train_csv_path)
+        train_bias  = train_file_info[2]
+        # Makes train bias directory
+        output_train_directory = output_directory + "Train_" + train_bias + "/"
+        try:
+            mkdir(output_train_directory)
+            print("Made:", output_train_directory)
+        except:
+            print("Directory already exists:", output_train_directory)
+            
+        # Loops over each test file
+        for test_file_info in test_file_bundle:
+            test_csv_path = test_file_info[0]
+            X_test,  y_test,  sc_test = Build_FeatureArrays_FromCSV(test_csv_path)
+            test_bias  = test_file_info[2]
+            
+            # Makes test bias directory
+            output_test_directory = output_train_directory
+            try:
+                mkdir(output_test_directory)
+                print("Made:", output_test_directory)
+            except:
+                print("Directory already exists:", output_test_directory)
+            
+            # Loops over each feature set to train and test with
+            for feature_set in feature_bundle:
+                feature_label = feature_set[0]
+                feature_label_lr = feature_set[0].copy()
+                feature_label_lr.append("lr_intercept") # Adds field for linear regression y-intercept
+                feature_index = feature_set[1]
+                
+                # Makes feature set directory
+                output_feature_directory = output_test_directory
+                try:
+                    mkdir(output_feature_directory)
+                    print("Made:", output_feature_directory)
+                except:
+                    print("Directory already exists:", output_feature_directory)
+                
+                #############################################################
+                #                                                           #
+                #   TRAIN ML OVER FULL GeV RANGE, TEST OVER SPECIFIC BINS   #
+                #                                                           #
+                #############################################################
+                
+                # Builds training and testing arrays
+                print("\nBuilding training and testing selected feature arrays...")
+                X_train_select  = Build_SelectFeatureArray(X_train, feature_index)
+                X_test_select   = Build_SelectFeatureArray(X_test, feature_index)
+                lr_pipeline     = None
+                lr_coeffs       = None
+                rf_pipeline     = None
+                rf_coeffs       = None
+                mlp_pipeline    = None
+                output_csv_base = "Train_" + train_bias + "_F" + str(len(feature_label)) + "_" + str(int(train_pt_min)) + "_" + str(int(train_pt_max))
+                
+                # Trains estimators
+                if use_lr:
+                    print("\nTraining linear regression estimator...")
+                    lr_pipeline, lr_coeffs = Train_LinearRegression(
+                        X_train_select,
+                        y_train,
+                        feature_label_lr,
+                        use_scaler = True)
+                    print(type(lr_pipeline))
+                    Write_MLCoefficients_ToCSV(
+                        output_feature_directory + output_csv_base + "_LR_Coeffs.csv",
+                        lr_coeffs,
+                        feature_label_lr
+                        )
+                        
+                if use_rf:
+                    print("\nTraining random forest regression estimator...")
+                    rf_pipeline, rf_coeffs = Train_RandomForestRegression(
+                        X_train_select,
+                        y_train,
+                        feature_label,
+                        use_scaler = True)
+                    print(type(rf_pipeline))
+                    Write_MLCoefficients_ToCSV(
+                        output_feature_directory + output_csv_base + "_RF_Coeffs.csv",
+                        rf_coeffs,
+                        feature_label
+                        )
+                
+                if use_mlp:
+                    print("\nTraining multilayer perceptron (neural net) regression estimator...")
+                    mlp_pipeline = Train_MLPRegression(
+                        X_train_select,
+                        y_train,
+                        feature_label,
+                        use_scaler = True)
+                    print(type(mlp_pipeline))
+                
+                for test_bin_set in test_bin_array:
+                    test_bin_label = test_bin_set[0]
+                    
+                    # Builds Train Bin outputs directories
+                    output_directory_temp = output_feature_directory + "F" + str(len(feature_label)) + "_" + test_bin_label + "/"
+                    try:
+                        mkdir(output_directory_temp)
+                        print("Made:", output_directory_temp)
+                    except:
+                        print("Directory already exists:", output_directory_temp)
+                            
+                    for test_bin in test_bin_set[1]:
+                        test_pt_min = test_bin[0]
+                        test_pt_max = test_bin[1]
+
+                        output = "\nTesting " + str(len(feature_index)) + " features on " + str(test_pt_min) + "-" + str(test_pt_max) + " GeV..."
+                        print(output)
+                        
+                        output_csv_path = output_directory_temp + output_csv_base + "_Test_" + str(int(test_pt_min)) + "_" + str(int(test_pt_max))
+                        
+                        if use_lr:
+                            TestAndSave_Estimator(
+                                feature_label,
+                                feature_index,
+                                lr_pipeline,
+                                X_test_select,
+                                y_test,
+                                sc_test,
+                                test_pt_min,
+                                test_pt_max,
+                                output_csv_path + "_LR.csv",
+                                use_scaler = True
+                                )
+                        if use_rf:
+                            TestAndSave_Estimator(
+                                feature_label,
+                                feature_index,
+                                rf_pipeline,
+                                X_test_select,
+                                y_test,
+                                sc_test,
+                                test_pt_min,
+                                test_pt_max,
+                                output_csv_path + "_RF.csv",
+                                use_scaler = True
+                                )
+                        if use_mlp:
+                            TestAndSave_Estimator(
+                                feature_label,
+                                feature_index,
+                                mlp_pipeline,
+                                X_test_select,
+                                y_test,
+                                sc_test,
+                                test_pt_min,
+                                test_pt_max,
+                                output_csv_path + "_MLP.csv",
+                                use_scaler = True
+                                )
+
+                        print("Test and save complete!\n")
+                
+                #################################################
+                #                                               #
+                #   TRAIN AND TEST OVER SMALLER BINS USING LR   #
+                #                                               #
+                #################################################
+                
+                if traintest_bin_array :
+                    for traintest_bin_set in traintest_bin_array:
+                        traintest_bin_label = traintest_bin_set[0]
+                        traintest_bin_test  = None
+                        if traintest_bin_set[2]: traintest_bin_test = traintest_bin_set[2]
+                        
+                        # Builds output directory
+                        output_directory_temp = output_feature_directory + "F" + str(len(feature_label)) + "_" + traintest_bin_label + "/"
+                        try:
+                            mkdir(output_directory_temp)
+                            print("made directory")
+                        except:
+                            print("directory already exists")
+                        
+                        for traintest_bin in traintest_bin_set[1]:
+                            train_pt_min = traintest_bin[0]
+                            train_pt_max = traintest_bin[1]
+                            test_pt_min = traintest_bin[0]
+                            test_pt_max = traintest_bin[1]
+                            if traintest_bin_test:
+                                test_pt_min = traintest_bin_test[0]
+                                test_pt_max = traintest_bin_test[1]
+                    
+                            output_csv_name = output_directory_temp + "Train_" + train_bias + "_F" + str(len(feature_label)) + "_" + str(int(train_pt_min)) + "_" + str(int(train_pt_max))
+
+                            X_train_cut  = []
+                            y_train_cut  = []
+                            sc_train_cut = []
+                            for i in range(len(X_train)):
+                                if (y_train[i] > train_pt_min) and (y_train[i] < train_pt_max):
+                                    X_train_cut.append(X_train[i])
+                                    y_train_cut.append(y_train[i])
+                                    sc_train_cut.append(sc_train[i])
+
+                            X_test_cut  = []
+                            y_test_cut  = []
+                            sc_test_cut = []
+                            for i in range(len(X_test)):
+                                if (y_test[i] > test_pt_min) and (y_test[i] < test_pt_max):
+                                    X_test_cut.append(X_test[i])
+                                    y_test_cut.append(y_test[i])
+                                    sc_test_cut.append(sc_test[i])
+
+                            # Builds training and testing arrays
+                            print("\nBuilding training and testing selected feature arrays...")
+                            X_train_select = Build_SelectFeatureArray(X_train_cut, feature_index)
+                            X_test_select  = Build_SelectFeatureArray(X_test_cut, feature_index)
+
+                            # Trains estimator
+                            print("\nTraining linear regression estimator...")
+                            lr_pipeline, lr_coeffs = Train_LinearRegression(
+                                X_train_select,
+                                y_train_cut,
+                                feature_label_lr,
+                                use_scaler = True)
+                            print(type(lr_pipeline))
+
+                            Write_MLCoefficients_ToCSV(
+                                output_csv_name + "_LR_Coeffs.csv",
+                                lr_coeffs,
+                                feature_label_lr
+                                )
+
+                            # Tests estimator and saves results
+                            output = "\nTesting " + str(len(feature_index)) + " features on " + str(int(test_pt_min)) + "_" + str(int(test_pt_max)) + " GeV..."
+                            print(output)
+
+                            output_csv_path = output_csv_name + "_Test_" + str(int(test_pt_min)) + "_" + str(int(test_pt_max)) + ".csv"
+                            
+                            TestAndSave_Estimator( # Always executes with LR
+                                feature_label,
+                                feature_index,
+                                lr_pipeline,
+                                X_test_select,
+                                y_test_cut,
+                                sc_test_cut,
+                                test_pt_min,
+                                test_pt_max,
+                                output_csv_path + "_LR.csv",
+                                use_scaler = True
+                                )
+                            if ( use_rf and traintest_bin_test ): # Can execute with RF
+                                TestAndSave_Estimator(
+                                    feature_label,
+                                    feature_index,
+                                    rf_pipeline,
+                                    X_test_select,
+                                    y_test_cut,
+                                    sc_test_cut,
+                                    test_pt_min,
+                                    test_pt_max,
+                                    output_csv_path + "_RF.csv",
+                                    use_scaler = True
+                                    )
+                            if ( use_mlp and traintest_bin_test ): # Can execute with MLP
+                                TestAndSave_Estimator(
+                                    feature_label,
+                                    feature_index,
+                                    mlp_pipeline,
+                                    X_test_select,
+                                    y_test_cut,
+                                    sc_test_cut,
+                                    test_pt_min,
+                                    test_pt_max,
+                                    output_csv_path + "_MLP.csv",
+                                    use_scaler = True
+                                    )
+
+                            print("Test and save complete!\n")
+                        
+    # Prints timestamp of completion
+    now = datetime.now()
+    dt_string = now.strftime("%Y/%m/%d %H:%M:%S")
+    print("\nComplete!", dt_string)
