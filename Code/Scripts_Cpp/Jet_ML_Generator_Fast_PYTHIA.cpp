@@ -48,7 +48,7 @@ double Func_ModifiedHagedorn(double* x, double* par) {
     double arg1 = par[0] * pow(x[0], 2) / pow( (pow(x[0], 2) + pow(par[1], 2)), 0.5);
     double arg2 = pow( 1 + (x[0] /par[2]), par[3] );
     double arg3 = 1 / x[0];
-    double fitval =  arg1 * arg2; // * arg3;
+    double fitval =  arg1 * arg2 * arg3;
     return fitval;
 }
 

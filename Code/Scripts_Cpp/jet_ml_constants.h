@@ -49,19 +49,19 @@ const int plot_blue     = kAzure;
 const int plot_violet   = kViolet-1;
 
 // Marker Styles
-const double mark_circ_open[2] = {24, 1.0};
-const double mark_circ_fill[2] = {20, 1.0};
-const double mark_squa_open[2] = {25, 0.9};
-const double mark_squa_fill[2] = {21, 0.9};
-const double mark_diam_open[2] = {27, 1.5};
-const double mark_diam_fill[2] = {33, 1.5};
-const double mark_star_open[2] = {42, 1.4};
-const double mark_star_fill[2] = {43, 1.4};
-const double mark_plus_open[2] = {28, 0.9};
-const double mark_plus_fill[2] = {34, 0.9};
-const double mark_triu_open[2] = {26, 1.1};
-const double mark_triu_fill[2] = {22, 1.1};
-const double mark_trid_open[2] = {32, 1.1};
-const double mark_trid_fill[2] = {23, 1.1};
+const float mark_circ_open[2] = {24, 1.0};
+const float mark_circ_fill[2] = {20, 1.0};
+const float mark_squa_open[2] = {25, 0.9};
+const float mark_squa_fill[2] = {21, 0.9};
+const float mark_diam_open[2] = {27, 1.5};
+const float mark_diam_fill[2] = {33, 1.5};
+const float mark_star_open[2] = {42, 1.4};
+const float mark_star_fill[2] = {43, 1.4};
+const float mark_plus_open[2] = {28, 0.9};
+const float mark_plus_fill[2] = {34, 0.9};
+const float mark_triu_open[2] = {26, 1.1};
+const float mark_triu_fill[2] = {22, 1.1};
+const float mark_trid_open[2] = {32, 1.1};
+const float mark_trid_fill[2] = {23, 1.1};
 
 } // End Jet_ML_Constants namespace

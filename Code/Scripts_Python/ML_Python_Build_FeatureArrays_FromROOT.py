@@ -30,7 +30,7 @@ def Build_FeatureArrays_FromROOT(
     input_file = None;
     if (ROOT.gSystem.AccessPathName(input_file_path)) :
         print("Input file path does not exist:", input_file)
-        exit()
+        sys.exit()
     else :
         input_file = ROOT.TFile.Open(input_file_path, "READ")
         print("Input file accessed successfully. Output file generated.")

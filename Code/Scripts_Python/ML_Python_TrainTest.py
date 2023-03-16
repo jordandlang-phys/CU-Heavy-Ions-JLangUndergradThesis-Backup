@@ -9,6 +9,7 @@ from sklearn.neural_network import MLPRegressor
 from statistics import mean, median
 from array import array
 from datetime import datetime
+from joblib import dump, load
 import numpy as np
 import math
 import csv
@@ -58,8 +59,9 @@ def Build_FeatureArrays_FromCSV(
         
         jet_counter   = jet_counter + 1
         
-        if jet_counter % 10000 == 0 : print(f"Jet: {jet_counter:2.0f} | pTraw: {float(row[0]):3.3f} | pTcorr: {float(row[1]): 3.3f} | pTtrue: {float(row[21]): 5.3f}")
+#        if jet_counter % 10000 == 0 : print(f"Jet: {jet_counter:2.0f} | pTraw: {float(row[0]):3.3f} | pTcorr: {float(row[1]): 3.3f} | pTtrue: {float(row[21]): 5.3f}")
     
+    print("Data collected!")
     input_csv.close()
     print("Backup .csv file closed.")
 
@@ -216,7 +218,10 @@ def Train_RandomForestRegression(
     X_train,            # Array of array of input features
     y_train,            # Array of target values
     features_labels,    # Array of string labels for each feature
-    use_scaler = True   # If True, uses StandardScalar
+    use_scaler = True,  # If True, uses StandardScalar
+    n_estimators = 100,
+    max_depth = 5,
+    n_jobs = 3
     ):
     print("\n----- Fitting Random Forest Regression Estimator -----\n")    
     
@@ -229,7 +234,9 @@ def Train_RandomForestRegression(
         print("\nData will not be rescaled.\n")
         
     # Creates a random forest estimator in a pipeline
-    rf_estimator = RandomForestRegressor()
+    rf_estimator = RandomForestRegressor(
+        n_jobs = n_jobs,
+        max_depth = max_depth)
     rf_pipeline = make_pipeline(
         scaler,
         rf_estimator )
@@ -254,7 +261,8 @@ def Train_MLPRegression(
     y_train,                     # Array of target values
     features_labels,             # Array of string labels for each feature
     use_scaler = True,   # If True, uses StandardScalar
-    max_iterations = 100         # Maximum number of iterations to use for training
+    max_iter = 200,         # Maximum number of iterations to use for training
+    hidden_layer_sizes = 100
     ):
     print("\n----- Fitting Neural Network Regression Estimator -----\n")   
     
@@ -267,7 +275,9 @@ def Train_MLPRegression(
         print("\nData will not be rescaled.\n")
         
     # Creates a MLP estimator in a pipeline
-    mlp_estimator = MLPRegressor(max_iter=max_iterations)
+    mlp_estimator = MLPRegressor(
+        max_iter = max_iter,
+        hidden_layer_sizes = hidden_layer_sizes)
     mlp_pipeline = make_pipeline(
         scaler,
         mlp_estimator)
@@ -462,18 +472,27 @@ def Full_TrainTest(
     train_pt_min,
     train_pt_max,
     use_lr  = True,     # Use linear regression. Defaults to True since LR is fast
-    use_rf  = False,    # Use random forest regression. Defaults to False since RF is slow
-    use_mlp = False,    # Use multi-layer perceptron regression. Defaults to False since MLP is slow
+    use_rf  = True,     # Use random forest regression. Defaults to False since RF is slow
+    use_mlp = True,     # Use multi-layer perceptron regression. Defaults to False since MLP is slow
+    use_lr_tt  = True,  # Use linear regression. Defaults to True since LR is fast
+    use_rf_tt  = False, # Use random forest regression. Defaults to False since RF is slow
+    use_mlp_tt = False, # Use multi-layer perceptron regression. Defaults to False since MLP is slow
+    rf_n_estimators = 100,
+    rf_max_depth = 5,
+    rf_n_jobs = 3,
+    mlp_max_iter = 200,
+    mlp_hidden_layer_sizes = 100
     ) :
     """
     """
     
+    time_start = datetime.now()
+    
     # Tries to makes the output directory if it doesn't exist yet
-    try:
-        mkdir(output_directory)
-        print("Made:", output_directory)
-    except:
-        print("Directory already exists:", output_directory)
+    if ( not path.exists(output_directory) ): mkdir(output_directory)
+    output_joblib_directory = output_directory + "JOBLIB_Backup/"
+    if ( not path.exists(output_joblib_directory) ): mkdir(output_joblib_directory)
+
     
     # Loops over each training file
     for train_file_info in train_file_bundle:
@@ -482,106 +501,128 @@ def Full_TrainTest(
         train_bias  = train_file_info[2]
         # Makes train bias directory
         output_train_directory = output_directory + "Train_" + train_bias + "/"
-        try:
-            mkdir(output_train_directory)
-            print("Made:", output_train_directory)
-        except:
-            print("Directory already exists:", output_train_directory)
+        if ( not path.exists(output_train_directory) ): mkdir(output_train_directory)
+        
+        # Loops over each feature set to train and test with
+        for feature_set in feature_bundle:
+            feature_label = feature_set[0]
+            feature_label_lr = feature_set[0].copy()
+            feature_label_lr.append("lr_intercept") # Adds field for linear regression y-intercept
+            feature_index = feature_set[1]
             
-        # Loops over each test file
-        for test_file_info in test_file_bundle:
-            test_csv_path = test_file_info[0]
-            X_test,  y_test,  sc_test = Build_FeatureArrays_FromCSV(test_csv_path)
-            test_bias  = test_file_info[2]
+            # Makes feature set directory
+            output_feature_directory = output_train_directory
+            if ( not path.exists(output_feature_directory) ): mkdir(output_feature_directory)
             
-            # Makes test bias directory
-            output_test_directory = output_train_directory
-            try:
-                mkdir(output_test_directory)
-                print("Made:", output_test_directory)
-            except:
-                print("Directory already exists:", output_test_directory)
+            #############################################################
+            #                                                           #
+            #   TRAIN ML OVER FULL GeV RANGE, TEST OVER SPECIFIC BINS   #
+            #                                                           #
+            #############################################################
             
-            # Loops over each feature set to train and test with
-            for feature_set in feature_bundle:
-                feature_label = feature_set[0]
-                feature_label_lr = feature_set[0].copy()
-                feature_label_lr.append("lr_intercept") # Adds field for linear regression y-intercept
-                feature_index = feature_set[1]
-                
-                # Makes feature set directory
-                output_feature_directory = output_test_directory
-                try:
-                    mkdir(output_feature_directory)
-                    print("Made:", output_feature_directory)
-                except:
-                    print("Directory already exists:", output_feature_directory)
-                
-                #############################################################
-                #                                                           #
-                #   TRAIN ML OVER FULL GeV RANGE, TEST OVER SPECIFIC BINS   #
-                #                                                           #
-                #############################################################
-                
-                # Builds training and testing arrays
-                print("\nBuilding training and testing selected feature arrays...")
-                X_train_select  = Build_SelectFeatureArray(X_train, feature_index)
-                X_test_select   = Build_SelectFeatureArray(X_test, feature_index)
-                lr_pipeline     = None
-                lr_coeffs       = None
-                rf_pipeline     = None
-                rf_coeffs       = None
-                mlp_pipeline    = None
-                output_csv_base = "Train_" + train_bias + "_F" + str(len(feature_label)) + "_" + str(int(train_pt_min)) + "_" + str(int(train_pt_max))
-                
-                # Trains estimators
-                if use_lr:
-                    print("\nTraining linear regression estimator...")
+            # Builds training and testing arrays
+            print("\nBuilding training and testing selected feature arrays...")
+            X_train_select  = Build_SelectFeatureArray(X_train, feature_index)
+            lr_pipeline     = None
+            lr_coeffs       = None
+            rf_pipeline     = None
+            rf_coeffs       = None
+            mlp_pipeline    = None
+            output_csv_base = "Train_" + train_bias + "_F" + str(len(feature_label)) + "_" + str(int(train_pt_min)) + "_" + str(int(train_pt_max))
+            
+            # Trains estimators
+            if use_lr:
+                print("\nTraining linear regression estimator...")
+                pipeline_backup = output_joblib_directory + output_csv_base + "_Pipeline_LR.joblib"
+                coeff_backup = output_joblib_directory + output_csv_base + "_Pipeline_LR_Coeffs.joblib"
+                coeff_csv = output_feature_directory + output_csv_base + "_LR_Coeffs.csv"
+                if ( path.exists(pipeline_backup) and path.exists(coeff_csv) ):
+                    print("Loading", pipeline_backup)
+                    print("Loading", coeff_backup)
+                    lr_pipeline = load(pipeline_backup)
+                    lr_coeffs = load(coeff_backup)
+                else:
                     lr_pipeline, lr_coeffs = Train_LinearRegression(
                         X_train_select,
                         y_train,
                         feature_label_lr,
                         use_scaler = True)
-                    print(type(lr_pipeline))
                     Write_MLCoefficients_ToCSV(
-                        output_feature_directory + output_csv_base + "_LR_Coeffs.csv",
+                        coeff_csv,
                         lr_coeffs,
                         feature_label_lr
                         )
-                        
-                if use_rf:
-                    print("\nTraining random forest regression estimator...")
+                    dump(lr_pipeline, pipeline_backup)
+                    dump(lr_coeffs, coeff_backup)
+                    
+            if use_rf:
+                print("\nTraining random forest regression estimator...")
+                pipeline_backup = output_joblib_directory + output_csv_base + "_Pipeline_RF.joblib"
+                coeff_backup = output_joblib_directory + output_csv_base + "_Pipeline_RF_Coeffs.joblib"
+                coeff_csv = output_feature_directory + output_csv_base + "_RF_Coeffs.csv"
+                if ( path.exists(pipeline_backup) and path.exists(coeff_backup) ):
+                    print("Loading", pipeline_backup)
+                    print("Loading", coeff_backup)
+                    rf_pipeline = load(pipeline_backup)
+                    rf_coeffs = load(coeff_backup)
+                    Write_MLCoefficients_ToCSV(
+                        coeff_csv,
+                        rf_coeffs,
+                        feature_label
+                        )
+                else:
                     rf_pipeline, rf_coeffs = Train_RandomForestRegression(
                         X_train_select,
                         y_train,
                         feature_label,
-                        use_scaler = True)
-                    print(type(rf_pipeline))
+                        use_scaler = True,
+                        n_estimators = rf_n_estimators,
+                        max_depth = rf_max_depth,
+                        n_jobs = rf_n_jobs
+                        )
                     Write_MLCoefficients_ToCSV(
-                        output_feature_directory + output_csv_base + "_RF_Coeffs.csv",
+                        coeff_csv,
                         rf_coeffs,
                         feature_label
                         )
-                
-                if use_mlp:
-                    print("\nTraining multilayer perceptron (neural net) regression estimator...")
+                    dump(rf_pipeline, pipeline_backup)
+                    dump(rf_coeffs, coeff_backup)
+            
+            if use_mlp:
+                print("\nTraining multilayer perceptron (neural net) regression estimator...")
+                pipeline_backup = output_joblib_directory + output_csv_base + "_Pipeline_MLP.joblib"
+                if ( path.exists(pipeline_backup) ):
+                    print("Loading", pipeline_backup)
+                    print("Loading", coeff_backup)
+                    mlp_pipeline = load(pipeline_backup)
+                else:
                     mlp_pipeline = Train_MLPRegression(
                         X_train_select,
                         y_train,
                         feature_label,
-                        use_scaler = True)
-                    print(type(mlp_pipeline))
+                        use_scaler = True,
+                        max_iter = mlp_max_iter,
+                        hidden_layer_sizes = mlp_hidden_layer_sizes
+                        )
+                    dump(mlp_pipeline, pipeline_backup)
+            
+            # Loops over each test file
+            for test_file_info in test_file_bundle:
+                test_csv_path = test_file_info[0]
+                test_bias     = test_file_info[2]
+                X_test,  y_test,  sc_test = Build_FeatureArrays_FromCSV(test_csv_path)
+                X_test_select = Build_SelectFeatureArray(X_test, feature_index)
+                
+                # Makes test bias directory
+                output_test_directory = output_feature_directory + "Test_" + test_bias + "/"
+                if ( not path.exists(output_test_directory) ): mkdir(output_test_directory)
                 
                 for test_bin_set in test_bin_array:
                     test_bin_label = test_bin_set[0]
                     
                     # Builds Train Bin outputs directories
-                    output_directory_temp = output_feature_directory + "F" + str(len(feature_label)) + "_" + test_bin_label + "/"
-                    try:
-                        mkdir(output_directory_temp)
-                        print("Made:", output_directory_temp)
-                    except:
-                        print("Directory already exists:", output_directory_temp)
+                    output_directory_temp = output_test_directory + "F" + str(len(feature_label)) + "_" + test_bin_label + "/"
+                    if ( not path.exists(output_directory_temp) ): mkdir(output_directory_temp)
                             
                     for test_bin in test_bin_set[1]:
                         test_pt_min = test_bin[0]
@@ -633,83 +674,80 @@ def Full_TrainTest(
                                 )
 
                         print("Test and save complete!\n")
-                
-                #################################################
-                #                                               #
-                #   TRAIN AND TEST OVER SMALLER BINS USING LR   #
-                #                                               #
-                #################################################
-                
-                if traintest_bin_array :
-                    for traintest_bin_set in traintest_bin_array:
-                        traintest_bin_label = traintest_bin_set[0]
-                        traintest_bin_test  = None
-                        if traintest_bin_set[2]: traintest_bin_test = traintest_bin_set[2]
-                        
-                        # Builds output directory
-                        output_directory_temp = output_feature_directory + "F" + str(len(feature_label)) + "_" + traintest_bin_label + "/"
-                        try:
-                            mkdir(output_directory_temp)
-                            print("made directory")
-                        except:
-                            print("directory already exists")
-                        
-                        for traintest_bin in traintest_bin_set[1]:
-                            train_pt_min = traintest_bin[0]
-                            train_pt_max = traintest_bin[1]
-                            test_pt_min = traintest_bin[0]
-                            test_pt_max = traintest_bin[1]
-                            if traintest_bin_test:
-                                test_pt_min = traintest_bin_test[0]
-                                test_pt_max = traintest_bin_test[1]
+            
+            #################################################
+            #                                               #
+            #   TRAIN AND TEST OVER SMALLER BINS USING LR   #
+            #                                               #
+            #################################################
+            
+            if traintest_bin_array :
+                for traintest_bin_set in traintest_bin_array:
+                    traintest_bin_label = traintest_bin_set[0]
                     
-                            output_csv_name = output_directory_temp + "Train_" + train_bias + "_F" + str(len(feature_label)) + "_" + str(int(train_pt_min)) + "_" + str(int(train_pt_max))
+                    # Builds output directory
+                    output_directory_temp = output_test_directory + "F" + str(len(feature_label)) + "_" + traintest_bin_label + "/"
+                    if ( not path.exists(output_directory_temp) ): mkdir(output_directory_temp)
+                    
+                    for traintest_bin in traintest_bin_set[1]:
+                        train_pt_min_temp = traintest_bin[0]
+                        train_pt_max_temp = traintest_bin[1]
+                        test_pt_min = traintest_bin[0]
+                        test_pt_max = traintest_bin[1]
 
-                            X_train_cut  = []
-                            y_train_cut  = []
-                            sc_train_cut = []
-                            for i in range(len(X_train)):
-                                if (y_train[i] > train_pt_min) and (y_train[i] < train_pt_max):
-                                    X_train_cut.append(X_train[i])
-                                    y_train_cut.append(y_train[i])
-                                    sc_train_cut.append(sc_train[i])
+                        X_train_cut  = []
+                        y_train_cut  = []
+                        sc_train_cut = []
+                        for i in range(len(X_train)):
+                            if (y_train[i] > train_pt_min_temp) and (y_train[i] < train_pt_max_temp):
+                                X_train_cut.append(X_train[i])
+                                y_train_cut.append(y_train[i])
+                                sc_train_cut.append(sc_train[i])
 
-                            X_test_cut  = []
-                            y_test_cut  = []
-                            sc_test_cut = []
-                            for i in range(len(X_test)):
-                                if (y_test[i] > test_pt_min) and (y_test[i] < test_pt_max):
-                                    X_test_cut.append(X_test[i])
-                                    y_test_cut.append(y_test[i])
-                                    sc_test_cut.append(sc_test[i])
+                        X_test_cut  = []
+                        y_test_cut  = []
+                        sc_test_cut = []
+                        for i in range(len(X_test)):
+                            if (y_test[i] > test_pt_min) and (y_test[i] < test_pt_max):
+                                X_test_cut.append(X_test[i])
+                                y_test_cut.append(y_test[i])
+                                sc_test_cut.append(sc_test[i])
 
-                            # Builds training and testing arrays
-                            print("\nBuilding training and testing selected feature arrays...")
-                            X_train_select = Build_SelectFeatureArray(X_train_cut, feature_index)
-                            X_test_select  = Build_SelectFeatureArray(X_test_cut, feature_index)
+                        # Builds training and testing arrays
+                        print("\nBuilding training and testing selected feature arrays...")
+                        X_train_select = Build_SelectFeatureArray(X_train_cut, feature_index)
+                        X_test_select  = Build_SelectFeatureArray(X_test_cut, feature_index)
 
-                            # Trains estimator
-                            print("\nTraining linear regression estimator...")
-                            lr_pipeline, lr_coeffs = Train_LinearRegression(
-                                X_train_select,
-                                y_train_cut,
-                                feature_label_lr,
-                                use_scaler = True)
-                            print(type(lr_pipeline))
-
-                            Write_MLCoefficients_ToCSV(
-                                output_csv_name + "_LR_Coeffs.csv",
-                                lr_coeffs,
-                                feature_label_lr
-                                )
-
-                            # Tests estimator and saves results
-                            output = "\nTesting " + str(len(feature_index)) + " features on " + str(int(test_pt_min)) + "_" + str(int(test_pt_max)) + " GeV..."
-                            print(output)
-
-                            output_csv_path = output_csv_name + "_Test_" + str(int(test_pt_min)) + "_" + str(int(test_pt_max)) + ".csv"
-                            
-                            TestAndSave_Estimator( # Always executes with LR
+                        # Trains estimator
+                        output_joblib_train = output_joblib_directory + "Train_" + train_bias + "_F" + str(len(feature_label)) + "_" + str(int(train_pt_min_temp)) + "_" + str(int(train_pt_max_temp))
+                        output_csv_train = output_directory_temp + "Train_" + train_bias + "_F" + str(len(feature_label)) + "_" + str(int(train_pt_min_temp)) + "_" + str(int(train_pt_max_temp))
+                        output_csv_test = output_csv_train + "_Test_" + str(int(test_pt_min)) + "_" + str(int(test_pt_max))
+                        
+                        if ( use_lr_tt ):
+                            print("\nTraining and testing linear regression estimator...")
+                            pipeline_backup = output_joblib_train + "_Pipeline_LR.joblib"
+                            coeff_backup = output_joblib_train + "_Pipeline_LR_Coeffs.joblib"
+                            lr_pipeline = None
+                            lr_coeffs = None
+                            if ( path.exists(pipeline_backup) and path.exists(coeff_backup) ):
+                                print("Loading", pipeline_backup)
+                                print("Loading", coeff_backup)
+                                lr_pipeline = load(pipeline_backup)
+                                lr_coeffs = load(coeff_backup)
+                            else:
+                                lr_pipeline, lr_coeffs = Train_LinearRegression(
+                                    X_train_select,
+                                    y_train_cut,
+                                    feature_label_lr,
+                                    use_scaler = True)
+                                Write_MLCoefficients_ToCSV(
+                                    output_csv_train + "_LR_Coeffs.csv",
+                                    lr_coeffs,
+                                    feature_label_lr
+                                    )
+                                dump(lr_pipeline, pipeline_backup)
+                                dump(lr_coeffs, coeff_backup)
+                            TestAndSave_Estimator(
                                 feature_label,
                                 feature_index,
                                 lr_pipeline,
@@ -718,39 +756,84 @@ def Full_TrainTest(
                                 sc_test_cut,
                                 test_pt_min,
                                 test_pt_max,
-                                output_csv_path + "_LR.csv",
+                                output_csv_test + "_LR.csv",
                                 use_scaler = True
                                 )
-                            if ( use_rf and traintest_bin_test ): # Can execute with RF
-                                TestAndSave_Estimator(
+                        if ( use_rf_tt ):
+                            print("\nTraining and testing random forest estimator...")
+                            pipeline_backup = output_joblib_train + "_Pipeline_RF.joblib"
+                            coeff_backup = output_joblib_train + "_Pipeline_RF_Coeffs.joblib"
+                            rf_pipeline = None
+                            rf_coeffs = None
+                            if ( path.exists(pipeline_backup) and path.exists(coeff_backup) ):
+                                print("Loading", pipeline_backup)
+                                print("Loading", coeff_backup)
+                                rf_pipeline = load(pipeline_backup)
+                                rf_coeffs = load(coeff_backup)
+                            else:
+                                rf_pipeline, rf_coeffs = Train_RandomForestRegression(
+                                    X_train_select,
+                                    y_train_cut,
                                     feature_label,
-                                    feature_index,
-                                    rf_pipeline,
-                                    X_test_select,
-                                    y_test_cut,
-                                    sc_test_cut,
-                                    test_pt_min,
-                                    test_pt_max,
-                                    output_csv_path + "_RF.csv",
-                                    use_scaler = True
+                                    use_scaler = True,
+                                    n_estimators = rf_n_estimators,
+                                    max_depth = rf_max_depth,
+                                    n_jobs = rf_n_jobs
                                     )
-                            if ( use_mlp and traintest_bin_test ): # Can execute with MLP
-                                TestAndSave_Estimator(
+                                Write_MLCoefficients_ToCSV(
+                                    output_csv_train + "_RF_Coeffs.csv",
+                                    rf_coeffs,
+                                    feature_label
+                                    )
+                                dump(lr_pipeline, pipeline_backup)
+                                dump(lr_coeffs, coeff_backup)
+                            TestAndSave_Estimator(
+                                feature_label,
+                                feature_index,
+                                rf_pipeline,
+                                X_test_select,
+                                y_test_cut,
+                                sc_test_cut,
+                                test_pt_min,
+                                test_pt_max,
+                                output_csv_test + "_RF.csv",
+                                use_scaler = True
+                                )
+                        if ( use_mlp_tt ): # Can execute with MLP
+                            print("\nTraining and testing MLP estimator...")
+                            pipeline_backup = output_joblib_train + "_Pipeline_MLP.joblib"
+                            mlp_pipeline = None
+                            if ( path.exists(pipeline_backup) ):
+                                print("Loading", pipeline_backup)
+                                mlp_pipeline = load(pipeline_backup)
+                            else:
+                                mlp_pipeline = Train_MLPRegression(
+                                    X_train_select,
+                                    y_train_cut,
                                     feature_label,
-                                    feature_index,
-                                    mlp_pipeline,
-                                    X_test_select,
-                                    y_test_cut,
-                                    sc_test_cut,
-                                    test_pt_min,
-                                    test_pt_max,
-                                    output_csv_path + "_MLP.csv",
-                                    use_scaler = True
+                                    use_scaler = True,
+                                    max_iter = mlp_max_iter,
+                                    hidden_layer_sizes = mlp_hidden_layer_sizes
                                     )
+                                dump(mlp_pipeline, pipeline_backup)
+                            TestAndSave_Estimator(
+                                feature_label,
+                                feature_index,
+                                mlp_pipeline,
+                                X_test_select,
+                                y_test_cut,
+                                sc_test_cut,
+                                test_pt_min,
+                                test_pt_max,
+                                output_csv_test + "_MLP.csv",
+                                use_scaler = True
+                                )
 
-                            print("Test and save complete!\n")
+                        print("Test and save complete!\n")
                         
     # Prints timestamp of completion
-    now = datetime.now()
-    dt_string = now.strftime("%Y/%m/%d %H:%M:%S")
-    print("\nComplete!", dt_string)
+    time_end = datetime.now()
+    time_delta = time_end - time_start
+    time_end_string = time_end.strftime("%Y/%m/%d %H:%M:%S")
+    print("\nComplete!", time_end_string)
+    print("Process duration:", time_delta)

@@ -241,10 +241,10 @@ void Plot_JetPt_ML_Corr_True_Difference(
 void Plot_LR_Coefficients(
     char  input_file_path[500],
     char  input_tree_name[10][100],
-    char  plot_file_name[100],
+    char  plot_file_name[200],
     float test_min_max_array[20][2],
     int   bin_count,
-    bool  show_offset
+    bool  show_intercept
     ) {
     
     TFile* input_file = new TFile(input_file_path, "READ");
@@ -260,7 +260,7 @@ void Plot_LR_Coefficients(
     
     float arr_test_pt_avg[20];
     float arr_jet_pt_raw[20];
-    float arr_jet_pt_corr[20];
+//    float arr_jet_pt_corr[20];
     float arr_jet_mass[20];
     float arr_jet_area[20];
     float arr_jet_const_n[20];
@@ -281,9 +281,10 @@ void Plot_LR_Coefficients(
         std::cout << "Adding data for range " << test_pt_min << " to " << test_pt_max << std::endl;
         
         TTree* coeff_tree = (TTree*) input_file->Get(input_tree_name[i]);
+        std::cout << "TTree: " << input_tree_name[i] << std::endl;
         
         float jet_pt_raw;
-        float jet_pt_corr;
+//        float jet_pt_corr;
         float jet_mass;
         float jet_area;
         float jet_const_n;
@@ -296,8 +297,11 @@ void Plot_LR_Coefficients(
         float jet_rho;
         float lr_intercept;
         
+        std::cout << "Made variables..." << std::endl;
+        
         coeff_tree->SetBranchAddress("jet_pt_raw",    &jet_pt_raw);
-        coeff_tree->SetBranchAddress("jet_pt_corr",   &jet_pt_corr);
+        std::cout << "Made it here!" << std::endl;
+//        coeff_tree->SetBranchAddress("jet_pt_corr",   &jet_pt_corr);
         coeff_tree->SetBranchAddress("jet_mass",      &jet_mass);
         coeff_tree->SetBranchAddress("jet_area",      &jet_area);
         coeff_tree->SetBranchAddress("jet_const_n",   &jet_const_n);
@@ -310,11 +314,13 @@ void Plot_LR_Coefficients(
         coeff_tree->SetBranchAddress("jet_rho",       &jet_rho);
         coeff_tree->SetBranchAddress("lr_intercept",  &lr_intercept);
         
+        std::cout << "Set branches..." << std::endl;
+        
         coeff_tree->GetEntry(0);
         
         arr_test_pt_avg[i]    = test_pt_avg;
         arr_jet_pt_raw[i]     = jet_pt_raw;
-        arr_jet_pt_corr[i]    = jet_pt_corr;
+//        arr_jet_pt_corr[i]    = jet_pt_corr;
         arr_jet_mass[i]       = jet_mass;
         arr_jet_area[i]       = jet_area;
         arr_jet_const_n[i]    = jet_const_n;
@@ -327,13 +333,15 @@ void Plot_LR_Coefficients(
         arr_jet_rho[i]        = jet_rho;
         arr_lr_intercept[i]   = lr_intercept;
         
+        std::cout << "Filled branches..." << std::endl;
+        
         delete coeff_tree;
     }
     
     TGraph* tg_jet_pt_raw       = new TGraph(bin_count, arr_test_pt_avg, arr_jet_pt_raw);
     tg_jet_pt_raw->SetTitle("Jet p_{T}^{Raw}; Average Train/Test p_{T} [GeV]; Coefficient Value");
-    TGraph* tg_jet_pt_corr      = new TGraph(bin_count, arr_test_pt_avg, arr_jet_pt_corr);
-    tg_jet_pt_corr->SetTitle("Jet p_{T}^{Corrected}; Average Train/Test p_{T} [GeV]; Coefficient Value");
+//    TGraph* tg_jet_pt_corr      = new TGraph(bin_count, arr_test_pt_avg, arr_jet_pt_corr);
+//    tg_jet_pt_corr->SetTitle("Jet p_{T}^{Corrected}; Average Train/Test p_{T} [GeV]; Coefficient Value");
     TGraph* tg_jet_mass         = new TGraph(bin_count, arr_test_pt_avg, arr_jet_mass);
     tg_jet_mass->SetTitle("Jet Mass; Average Train/Test p_{T} [GeV]; Coefficient Value");
     TGraph* tg_jet_area         = new TGraph(bin_count, arr_test_pt_avg, arr_jet_area);
@@ -377,10 +385,10 @@ void Plot_LR_Coefficients(
     tg_jet_pt_raw->SetMarkerStyle(mark_circ_open[0]);
     tg_jet_pt_raw->SetMarkerSize(mark_circ_open[1]);
     
-    tg_jet_pt_corr->SetLineColor(kViolet-5);
-    tg_jet_pt_corr->SetMarkerColor(kViolet-5);
-    tg_jet_pt_corr->SetMarkerStyle(mark_squa_open[0]);
-    tg_jet_pt_corr->SetMarkerSize(mark_squa_open[1]);
+//    tg_jet_pt_corr->SetLineColor(kViolet-5);
+//    tg_jet_pt_corr->SetMarkerColor(kViolet-5);
+//    tg_jet_pt_corr->SetMarkerStyle(mark_squa_open[0]);
+//    tg_jet_pt_corr->SetMarkerSize(mark_squa_open[1]);
     
     tg_jet_mass->SetLineColor(kPink+5);
     tg_jet_mass->SetMarkerColor(kPink+5);
@@ -438,9 +446,9 @@ void Plot_LR_Coefficients(
     tg_lr_intercept->SetMarkerSize(mark_circ_open[1]);
     
     // Plot coefficient histograms onto canvas
-    if ( show_offset ) tmg_canvas_plot->Add(tg_lr_intercept, "PL"); // Draws intercept values first to be in background
+    if ( show_intercept ) tmg_canvas_plot->Add(tg_lr_intercept, "PL"); // Draws intercept values first to be in background
     tmg_canvas_plot->Add(tg_jet_pt_raw, "PL");
-    tmg_canvas_plot->Add(tg_jet_pt_corr, "PL");
+//    tmg_canvas_plot->Add(tg_jet_pt_corr, "PL");
     tmg_canvas_plot->Add(tg_jet_mass, "PL");
     tmg_canvas_plot->Add(tg_jet_area, "PL");
     tmg_canvas_plot->Add(tg_jet_const_n, "PL");
@@ -455,10 +463,10 @@ void Plot_LR_Coefficients(
     
     // Make and plot legend
     std::cout << "Making legend..." << std::endl;
-    TLegend* legend = new TLegend(0.62, 0.12, 0.77, 0.50);
+    TLegend* legend = new TLegend(0.65, 0.50, 0.85, 0.85);
     
     legend->AddEntry(tg_jet_pt_raw,       "Jet p_{T}^{Raw}", "lp");
-    legend->AddEntry(tg_jet_pt_corr,      "Jet p_{T}^{Area Correction}", "lp");
+//    legend->AddEntry(tg_jet_pt_corr,      "Jet p_{T}^{Area Correction}", "lp");
     legend->AddEntry(tg_jet_mass,         "Jet Mass", "lp");
     legend->AddEntry(tg_jet_area,         "Jet Area", "lp");
     legend->AddEntry(tg_jet_const_n,      "Number of Constituents", "lp");
@@ -469,7 +477,7 @@ void Plot_LR_Coefficients(
     legend->AddEntry(tg_const_pt_4,       "Constituent 4 p_{T}", "lp");
     legend->AddEntry(tg_jet_y,            "Jet y", "lp");
     legend->AddEntry(tg_jet_rho,          "Jet #rho", "lp");
-    if ( show_offset ) legend->AddEntry(tg_lr_intercept,     "Lin. Reg. Intercept", "lp");
+    if ( show_intercept ) legend->AddEntry(tg_lr_intercept,     "Lin. Reg. Intercept", "lp");
     
     legend->SetLineWidth(0);
     legend->SetFillStyle(0);
@@ -535,6 +543,8 @@ void Plot_JetPt_ML_Comparison(
     char  lr_tree_name[100],
     char  rf_tree_name[100],
     char  mlp_tree_name[100],
+    char  label_ptbias[100],
+    char  label_feature[100],
     char  coeff_tree_name[100],
     char  coeff_label[100],
     float train_pt_min,
@@ -730,16 +740,63 @@ void Plot_JetPt_ML_Comparison(
     th1_neural_network          ->Draw("same");
     th1_random_forest           ->Draw("same");
     th1_linear_regression       ->Draw("same");
-
+    
+    string legend_title_line1_str;
+    string legend_title_line2_str = "Train " + std::to_string(int(train_pt_min)) + "-" + std::to_string(int(train_pt_max)) + " GeV, Test " + std::to_string(int(test_pt_min)) + "-" + std::to_string(int(test_pt_max)) + " GeV";
+    string title_bias;
+    if      ( !string(label_ptbias).compare("B0") ) title_bias = "No Bias";
+    else if ( !string(label_ptbias).compare("B4") ) title_bias = "p_{T}^{4} Bias";
+    else if ( !string(label_ptbias).compare("B8") ) title_bias = "p_{T}^{8} Bias";
+    else if ( !string(label_ptbias).compare("B8_Flat") ) title_bias = "Flat";
+    else if ( !string(label_ptbias).compare("B8_Flat_T2") ) title_bias = "Flat";
+    else title_bias = "Unknown";
+    string title_feature;
+    if      ( !string(label_feature).compare("F1") ) title_feature = "1 Feature";
+    else if ( !string(label_feature).compare("F3") ) title_feature = "3 Features";
+    else if ( !string(label_feature).compare("F11") ) title_feature = "11 Features";
+    else if ( !string(label_feature).compare("F12") ) title_feature = "12 Features";
+    else title_feature = "Unknown";
+    legend_title_line1_str = title_bias + " Distribution, " + title_feature;
+    string legend_title_all = legend_title_line1_str + "\n" + legend_title_line2_str;
+    
+    
+    char  legend_title_1[100];
+    snprintf(legend_title_1, 100, "%s", legend_title_line1_str.c_str());
+    char  legend_title_2[100];
+    snprintf(legend_title_2, 100, "%s", legend_title_line2_str.c_str());
+    char  nn_stats[100];
+    float nn_mean   = th1_neural_network->GetMean();
+    float nn_stddev = th1_neural_network->GetStdDev();
+    snprintf(nn_stats, 100, "#Deltap_{T}: %.2f, #sigma: %.2f", nn_mean, nn_stddev);
+    char  rf_stats[100];
+    float rf_mean   = th1_random_forest->GetMean();
+    float rf_stddev = th1_random_forest->GetStdDev();
+    snprintf(rf_stats, 100, "#Deltap_{T}: %.2f, #sigma: %.2f", rf_mean, rf_stddev);
+    char  lr_stats[100];
+    float lr_mean   = th1_linear_regression->GetMean();
+    float lr_stddev = th1_linear_regression->GetStdDev();
+    snprintf(lr_stats, 100, "#Deltap_{T}: %.2f, #sigma: %.2f", lr_mean, lr_stddev);
+    char  sc_stats[100];
+    float sc_mean   = th1_simple_correction->GetMean();
+    float sc_stddev = th1_simple_correction->GetStdDev();
+    snprintf(sc_stats, 100, "#Deltap_{T}: %.2f, #sigma: %.2f", sc_mean, sc_stddev);
+    
     // Draws Legend as TLegend(xmin, ymin, xmax, ymax)
     if ( show_legend ) {
         TLegend* legend;
-        if ( show_paper_plots ) legend = new TLegend(0.15, 0.45, 0.40, 0.85);
-        else legend = new TLegend(0.15, 0.65, 0.40, 0.85);
-        legend->AddEntry(th1_neural_network,       "Neural Network", "lp");
-        legend->AddEntry(th1_random_forest,        "Random Forest", "lp");
-        legend->AddEntry(th1_linear_regression,    "Linear Regression", "lp");
-        legend->AddEntry(th1_simple_correction,    "Area Correction", "lp");
+        if      ( show_widths and show_paper_plots ) legend = new TLegend(0.60, 0.25, 0.85, 0.85);
+        else if ( show_widths xor show_paper_plots ) legend = new TLegend(0.60, 0.45, 0.85, 0.85);
+        else legend = new TLegend(0.60, 0.65, 0.85, 0.85);
+//        legend->AddEntry((TObject*)0, legend_title_1, ""); // Adds a title to the legend
+//        legend->AddEntry((TObject*)0, legend_title_2, ""); // Adds a title to the legend
+        legend->AddEntry(th1_neural_network,       "Multilayer Perceptron", "pl");
+        if ( show_widths ) legend->AddEntry((TObject*)0, nn_stats, "");
+        legend->AddEntry(th1_random_forest,        "Random Forest", "pl");
+        if ( show_widths ) legend->AddEntry((TObject*)0, rf_stats, "");
+        legend->AddEntry(th1_linear_regression,    "Linear Regression", "pl");
+        if ( show_widths ) legend->AddEntry((TObject*)0, lr_stats, "");
+        legend->AddEntry(th1_simple_correction,    "Area Correction", "pl");
+        if ( show_widths ) legend->AddEntry((TObject*)0, sc_stats, "");
         if ( show_paper_plots) {
             legend->AddEntry(tf1_paper_neural_network_fit,      "NN (Paper)", "l");
             legend->AddEntry(tf1_paper_random_forest_fit,       "RF (Paper)", "l");
@@ -749,25 +806,28 @@ void Plot_JetPt_ML_Comparison(
         legend->SetLineWidth(0);
         legend->SetFillStyle(0);
         legend->Draw();
+        
+        latex->DrawLatex(0.15, 0.81, ("#scale[0.75]{" + legend_title_line1_str + "}").c_str());
+        latex->DrawLatex(0.15, 0.75, ("#scale[0.75]{" + legend_title_line2_str + "}").c_str());
     }
     
     // Draws Feature List
-    if ( show_widths ) {
-        char sigma_list[5][100];
-        sprintf(sigma_list[0], "#scale[0.6]{Fit Widths}");
-        sprintf(sigma_list[1], "#scale[0.6]{#bf{#sigma_{Neural Network}}}");
-        sprintf(sigma_list[2], "#scale[0.6]{#bf{#sigma_{Random Forest}}}");
-        sprintf(sigma_list[3], "#scale[0.6]{#bf{#sigma_{Linear Regression}}}");
-        sprintf(sigma_list[4], "#scale[0.6]{#bf{#sigma_{Area Correction}}}");
-        char sigma_vals[5][100];
-        sprintf(sigma_vals[0], "");
-        sprintf(sigma_vals[1], "#scale[0.6]{#bf{%1.3f}}", tf1_neural_network_fit    ->GetParameter(2));
-        sprintf(sigma_vals[2], "#scale[0.6]{#bf{%1.3f}}", tf1_random_forest_fit     ->GetParameter(2));
-        sprintf(sigma_vals[3], "#scale[0.6]{#bf{%1.3f}}", tf1_linear_regression_fit ->GetParameter(2));
-        sprintf(sigma_vals[4], "#scale[0.6]{#bf{%1.3f}}", tf1_simple_correction_fit ->GetParameter(2));
-        for ( int i = 0 ; i < 5 ; i++ ) latex->DrawLatex(0.63, (.813 - 0.0494 * i), sigma_list[i]);
-        for ( int i = 0 ; i < 5 ; i++ ) latex->DrawLatex(0.80, (.813 - 0.0494 * i), sigma_vals[i]);
-    }
+//    if ( show_widths ) {
+//        char sigma_list[5][100];
+//        sprintf(sigma_list[0], "#scale[0.6]{Fit Widths}");
+//        sprintf(sigma_list[1], "#scale[0.6]{#bf{#sigma_{Neural Network}}}");
+//        sprintf(sigma_list[2], "#scale[0.6]{#bf{#sigma_{Random Forest}}}");
+//        sprintf(sigma_list[3], "#scale[0.6]{#bf{#sigma_{Linear Regression}}}");
+//        sprintf(sigma_list[4], "#scale[0.6]{#bf{#sigma_{Area Correction}}}");
+//        char sigma_vals[5][100];
+//        sprintf(sigma_vals[0], "");
+//        sprintf(sigma_vals[1], "#scale[0.6]{#bf{%1.3f}}", tf1_neural_network_fit    ->GetParameter(2));
+//        sprintf(sigma_vals[2], "#scale[0.6]{#bf{%1.3f}}", tf1_random_forest_fit     ->GetParameter(2));
+//        sprintf(sigma_vals[3], "#scale[0.6]{#bf{%1.3f}}", tf1_linear_regression_fit ->GetParameter(2));
+//        sprintf(sigma_vals[4], "#scale[0.6]{#bf{%1.3f}}", tf1_simple_correction_fit ->GetParameter(2));
+//        for ( int i = 0 ; i < 5 ; i++ ) latex->DrawLatex(0.63, (.813 - 0.0494 * i), sigma_list[i]);
+//        for ( int i = 0 ; i < 5 ; i++ ) latex->DrawLatex(0.80, (.813 - 0.0494 * i), sigma_vals[i]);
+//    }
     
     // Prints out the plot
     char plot_output[500];
