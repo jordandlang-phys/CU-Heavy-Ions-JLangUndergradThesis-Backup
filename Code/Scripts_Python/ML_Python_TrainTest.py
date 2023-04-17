@@ -3,7 +3,7 @@ import sklearn
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import accuracy_score
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, ElasticNet, SGDRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neural_network import MLPRegressor
 from statistics import mean, median
@@ -173,9 +173,15 @@ def Train_LinearRegression(
     X_train,            # Array of array of input features
     y_train,            # Array of target values
     features_labels,    # Array of string labels for each feature
+    pipeline_backup,
+    coeff_backup,
+    coeff_csv,
+    save_estimator = True,
     use_scaler = True   # If True, uses StandardScalar
     ):
     print("\n----- Fitting Linear Regression Estimator -----\n")
+    
+    scaler = None
     
     # Sets Scaler
     if use_scaler:
@@ -199,10 +205,11 @@ def Train_LinearRegression(
     # Outputs regression coefficients
     lr_coeffs = lr_estimator.coef_
     intercept = lr_estimator.intercept_
-    print(intercept)
-    print(lr_coeffs)
     lr_coeffs = np.append(lr_coeffs, intercept)
-    print(lr_coeffs)
+    
+    if save_estimator :
+        # checks is file saved already
+        # Saves file if not already exists
 
     print("Regression Coefficients:")
     for i in range(len(lr_coeffs)) :
@@ -214,16 +221,127 @@ def Train_LinearRegression(
 
 
 
+def Train_ElasticNetRegression(
+    X_train,            # Array of array of input features
+    y_train,            # Array of target values
+    features_labels,    # Array of string labels for each feature
+    pipeline_backup,
+    coeff_backup,
+    coeff_csv,
+    use_scaler = True,  # If True, uses StandardScalar
+    alpha = 1.0,        # If alpha=0, acts as LinRegression
+    l1_ratio = 0.5,     #
+    max_iter = 1000     # Maximum iterations
+    ):
+    print("\n----- Fitting Linear Regression Estimator -----\n")
+    
+    scaler = None
+    
+    # Sets Scaler
+    if use_scaler:
+        scaler = StandardScaler(with_mean=True, with_std=True)
+        print("\nUsing StandardScaler. Data will be recentered and normalized.\n")
+    else:
+        scaler = StandardScaler(with_mean=False, with_std=False)
+        print("\nData will not be rescaled.\n")
+        
+    # Creates a linear regression model in a pipeline
+    en_estimator = ElasticNet()
+    en_pipeline = make_pipeline(
+        scaler,
+        en_estimator )
+    en_coeffs = 0
+    
+    # Fits the regression model
+    output = en_pipeline.fit(X_train, y_train)
+    print("\nLinear Regression Fit:\n", output)
+
+    # Outputs regression coefficients
+    en_coeffs = en_estimator.coef_
+    intercept = en_estimator.intercept_
+    print(intercept)
+    print(en_coeffs)
+    en_coeffs = np.append(en_coeffs, intercept)
+    print(en_coeffs)
+
+    print("Regression Coefficients:")
+    for i in range(len(en_coeffs)) :
+        print(features_labels[i], en_coeffs[i])
+    
+    print(type(en_pipeline))
+    
+    return en_pipeline, en_coeffs
+
+
+
+def Train_SGDRegression(
+    X_train,            # Array of array of input features
+    y_train,            # Array of target values
+    features_labels,    # Array of string labels for each feature
+    pipeline_backup,
+    coeff_backup,
+    coeff_csv,
+    use_scaler = True,  # If True, uses StandardScalar
+    alpha = 1.0,        # If alpha=0, acts as LinRegression
+    l1_ratio = 0.5,     #
+    max_iter = 1000     # Maximum iterations
+    ):
+    print("\n----- Fitting Linear Regression Estimator -----\n")
+    
+    scaler = None
+    
+    # Sets Scaler
+    if use_scaler:
+        scaler = StandardScaler(with_mean=True, with_std=True)
+        print("\nUsing StandardScaler. Data will be recentered and normalized.\n")
+    else:
+        scaler = StandardScaler(with_mean=False, with_std=False)
+        print("\nData will not be rescaled.\n")
+        
+    # Creates a linear regression model in a pipeline
+    sgd_estimator = ElasticNet()
+    sgd_pipeline = make_pipeline(
+        scaler,
+        sgd_estimator )
+    sgd_coeffs = 0
+    
+    # Fits the regression model
+    output = sgd_pipeline.fit(X_train, y_train)
+    print("\nLinear Regression Fit:\n", output)
+
+    # Outputs regression coefficients
+    sgd_coeffs = sgd_estimator.coef_
+    intercept = sgd_estimator.intercept_
+    print(intercept)
+    print(sgd_coeffs)
+    sgd_coeffs = np.append(sgd_coeffs, intercept)
+    print(sgd_coeffs)
+
+    print("Regression Coefficients:")
+    for i in range(len(sgd_coeffs)) :
+        print(features_labels[i], sgd_coeffs[i])
+    
+    print(type(sgd_pipeline))
+    
+    return sgd_pipeline, sgd_coeffs
+    
+    
+    
 def Train_RandomForestRegression(
     X_train,            # Array of array of input features
     y_train,            # Array of target values
     features_labels,    # Array of string labels for each feature
+    pipeline_backup,
+    coeff_backup,
+    coeff_csv,
     use_scaler = True,  # If True, uses StandardScalar
-    n_estimators = 100,
-    max_depth = 5,
-    n_jobs = 3
+    n_estimators = 100, # Number of estimator trees to average across
+    max_depth = 5,      # Maximum depth per tree
+    n_jobs = 3          # Number of cores to use
     ):
     print("\n----- Fitting Random Forest Regression Estimator -----\n")    
+    
+    scaler = None
     
     # Sets Scaler
     if use_scaler:
@@ -259,12 +377,17 @@ def Train_RandomForestRegression(
 def Train_MLPRegression(
     X_train,                     # Array of array of input features
     y_train,                     # Array of target values
+    pipeline_backup,
+    coeff_backup,
+    coeff_csv,
     features_labels,             # Array of string labels for each feature
     use_scaler = True,   # If True, uses StandardScalar
     max_iter = 200,         # Maximum number of iterations to use for training
     hidden_layer_sizes = 100
     ):
     print("\n----- Fitting Neural Network Regression Estimator -----\n")   
+    
+    scaler = None
     
     # Sets Scaler
     if use_scaler:
@@ -288,62 +411,6 @@ def Train_MLPRegression(
     
     return mlp_pipeline
 
-
-
-def Train_All_Estimators(
-    X_train,             # Array of array of input features
-    y_train,             # Array of target values
-    features_labels,     # Array of string labels for each feature
-    use_scaler = True,   # If True, uses StandardScalar
-    use_lr = True,       # If True, trains a linear regression estimator
-    use_rf = True,       # If True, trains a random forest regression estimator
-    use_mlp = True       # If True, trains a multilayer perceptron regression estimator
-    ):
-    """
-    Function for training Machine Learning Estimators.
-    Takes in feature array (X_train) - this is actually an array of arrays, 
-    a target array (y_train), and an array of feature labels (feature_arr_labels).
-    
-    Note that X_train and y_train MUST be the same length, 
-    and feature_arr_lables should be 1 longer than the number of features used.
-    
-    Returns:
-    lr_pipeline      Trained sklearn LinearRegression estimator
-    rf_pipeline      Trained sklearn RandomForestRegressor estimator
-    mlp_pipeline     Trained sklearn MLPRegressor estimator
-    lr_coeffs_arr    Array of coefficients used by lr_pipeline, corresponding to each input feature
-    rf_features_arr  Array of feature importances used by rf_pipeline, corresponding to each input feature
-    """
-    
-    print("\n===== Running Train_Estimators Function =====\n")
-    
-    # --- LINEAR REGRESSION ---
-    
-    if use_lr:
-        Train_LinearRegression(X_train, y_train, features_labels, use_scaler = use_scaler)
-    else:
-        lr_pipeline = False
-        lr_coeffs_arr = False
-
-    
-    # --- RANDOM FOREST REGRESSION ---
-    
-    if use_rf:
-        Train_RandomForestRegression(X_train, y_train, features_labels, use_scaler = use_scaler)
-    else:
-        rf_pipeline = False
-        rf_features_arr = False
-        
-        
-    # --- MULTILAYER PERCEPTRON REGRESSION ---
-    
-    if use_mlp:
-        Train_MLPRegression(X_train, y_train, features_labels, use_scaler = use_scaler)
-    else:
-        mlp_pipeline = False
-    
-    return lr_pipeline, rf_pipeline, mlp_pipeline, lr_coeffs_arr, rf_features_arr
-
     
     
 def Test_Estimator(
@@ -358,16 +425,16 @@ def Test_Estimator(
     results        Array of predicted values from input features
     results_delta  Array of differences between prediction and truth (prediction - truth)
     """
+    results, results_delta = False, False
     
-    if not ml_pipeline:
+    if ml_pipeline:
+        results = ml_pipeline.predict(X_test)
+        results_delta = []
+        
+        for j in range(len(results)):
+            results_delta.append(results[j] - y_test[j])
+    else:
         print("No pipeline provided!")
-        return False, False
-    
-    results = ml_pipeline.predict(X_test)
-    results_delta = []
-    
-    for j in range(len(results)):
-        results_delta.append(results[j] - y_test[j])
     
     return results, results_delta
 
@@ -423,7 +490,9 @@ def Test_All_Estimators(
     y_test,          # Array of pT truth values for comparison
     lr_pipeline,     # Trained Linear Regression estimator pipeline
     rf_pipeline,     # Trained Random Forest estimator pipeline
-    mlp_pipeline     # Trained Multilayer Perceptron estimator pipeline
+    mlp_pipeline,    # Trained Multilayer Perceptron estimator pipeline
+    en_pipeline,
+    sgd_pipeline
     ) :
     """
     Function for testing the Machine Learning estimators on testing data sets.
@@ -444,9 +513,11 @@ def Test_All_Estimators(
     """
     
     # Initializes ML results variables
-    lr_results, lr_results_delta   = False, False
-    rf_results, rf_results_delta   = False, False
-    mlp_results, mlp_results_delta = False, False
+    lr_results,  lr_results_delta   = False, False
+    rf_results,  rf_results_delta   = False, False
+    mlp_results, mlp_results_delta  = False, False
+    en_results,  en_results_delta   = False, False
+    sgd_results, sgd_results_delta  = False, False
     
     # Tests each estimator and assigns outcomes to results
     if lr_pipeline:
@@ -458,8 +529,13 @@ def Test_All_Estimators(
     if mlp_pipeline:
         mlp_results, mlp_results_delta = Test_Estimator(mlp_pipeline, X_test, y_test)
     
-    return lr_results, lr_results_delta, rf_results, rf_results_delta, mlp_results, mlp_results_delta
+    return lr_results, rf_results, mlp_results,
 
+
+
+def Full_Train(
+    ) :
+    
 
 
 def Full_TrainTest(
@@ -474,9 +550,13 @@ def Full_TrainTest(
     use_lr  = True,     # Use linear regression. Defaults to True since LR is fast
     use_rf  = True,     # Use random forest regression. Defaults to False since RF is slow
     use_mlp = True,     # Use multi-layer perceptron regression. Defaults to False since MLP is slow
+    use_en  = True,     # Use elastic-net regression. Defaults to False since RF is slow
+    use_sgd = True,     # Use SGD perceptron regression. Defaults to False since MLP is slow
     use_lr_tt  = True,  # Use linear regression. Defaults to True since LR is fast
     use_rf_tt  = False, # Use random forest regression. Defaults to False since RF is slow
     use_mlp_tt = False, # Use multi-layer perceptron regression. Defaults to False since MLP is slow
+    use_en_tt  = True,  # Use elastic-net regression. Defaults to False since RF is slow
+    use_sgd_tt = True,  # Use SGD perceptron regression. Defaults to False since MLP is slow
     rf_n_estimators = 100,
     rf_max_depth = 5,
     rf_n_jobs = 3,
@@ -532,7 +612,6 @@ def Full_TrainTest(
             
             # Trains estimators
             if use_lr:
-                print("\nTraining linear regression estimator...")
                 pipeline_backup = output_joblib_directory + output_csv_base + "_Pipeline_LR.joblib"
                 coeff_backup = output_joblib_directory + output_csv_base + "_Pipeline_LR_Coeffs.joblib"
                 coeff_csv = output_feature_directory + output_csv_base + "_LR_Coeffs.csv"
@@ -546,6 +625,9 @@ def Full_TrainTest(
                         X_train_select,
                         y_train,
                         feature_label_lr,
+                        pipeline_backup,
+                        coeff_backup,
+                        coeff_csv,
                         use_scaler = True)
                     Write_MLCoefficients_ToCSV(
                         coeff_csv,
@@ -837,3 +919,75 @@ def Full_TrainTest(
     time_end_string = time_end.strftime("%Y/%m/%d %H:%M:%S")
     print("\nComplete!", time_end_string)
     print("Process duration:", time_delta)
+
+
+#def Train_All_Estimators(
+#    X_train,             # Array of array of input features
+#    y_train,             # Array of target values
+#    features_labels,     # Array of string labels for each feature
+#    use_scaler = True,   # If True, uses StandardScalar
+#    use_lr  = True,      # If True, trains a linear regression estimator
+#    use_rf  = True,      # If True, trains a random forest regression estimator
+#    use_mlp = True,      # If True, trains a multilayer perceptron regression estimator
+#    use_en  = True,      # If True, trains a multilayer perceptron regression estimator
+#    use_sgd = True       # If True, trains a multilayer perceptron regression estimator
+#    ):
+#    """
+#    Function for training Machine Learning Estimators.
+#    Takes in feature array (X_train) - this is actually an array of arrays,
+#    a target array (y_train), and an array of feature labels (feature_arr_labels).
+#
+#    Note that X_train and y_train MUST be the same length,
+#    and feature_arr_lables should be 1 longer than the number of features used.
+#
+#    Returns:
+#    lr_pipeline      Trained sklearn LinearRegression estimator
+#    rf_pipeline      Trained sklearn RandomForestRegressor estimator
+#    mlp_pipeline     Trained sklearn MLPRegressor estimator
+#    en_pipeline
+#    sgd_pipeline
+#    lr_coeffs_arr    Array of coefficients used by lr_pipeline, corresponding to each input feature
+#    rf_features_arr  Array of feature importances used by rf_pipeline, corresponding to each input feature
+#    """
+#
+#    print("\n===== Running Train_Estimators Function =====\n")
+#
+#    lr_pipeline, rf_pipeline, mlp_pipeline, en_pipeline, sgd_pipeline = False, False, False, False, False
+#    lr_coeffs_arr, rf_features_arr, en_coeffs_arr, sgd_coeffs_arr = False, False, False, False
+#
+#    # LINEAR REGRESSION
+#    if use_lr:
+#        Train_LinearRegression(X_train, y_train, features_labels, use_scaler = use_scaler)
+#    else:
+#        lr_pipeline = False
+#        lr_coeffs_arr = False
+#
+#    # RANDOM FOREST REGRESSION
+#    if use_rf:
+#        Train_RandomForestRegression(X_train, y_train, features_labels, use_scaler = use_scaler)
+#    else:
+#        rf_pipeline = False
+#        rf_features_arr = False
+#
+#    # MULTILAYER PERCEPTRON REGRESSION
+#    if use_mlp:
+#        Train_MLPRegression(X_train, y_train, features_labels, use_scaler = use_scaler)
+#    else:
+#        mlp_pipeline = False
+#
+#    # ELASTICNET REGRESSION
+#    if use_lr:
+#        en_pipeline, en_coeffs_arr = Train_ElasticNetRegression(X_train, y_train, features_labels, use_scaler = use_scaler)
+#    else:
+#        en_pipeline = False
+#        en_coeffs_arr = False
+#
+#    # SGD REGRESSION
+#    if use_lr:
+#        sgd_pipeline, sgd_coeffs_arr = Train_SGDRegression(X_train, y_train, features_labels, use_scaler = use_scaler)
+#    else:
+#        sgd_pipeline = False
+#        sgd_coeffs_arr = False
+#
+#    return (lr_pipeline,    rf_pipeline,     mlp_pipeline,  en_pipeline,    sgd_pipeline
+#            lr_coeffs_arr,  rf_features_arr,                en_coeffs_arr,  sgd_coeffs_arr)
